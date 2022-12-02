@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import rospy
 import subprocess
@@ -15,9 +15,6 @@ import rosbag
 
 from sensor_msgs.msg import Image, CompressedImage
 from std_msgs.msg import Int32, String, Bool
-
-#Allow keyboard key to be set
-from pynput import keyboard
 
 class RosbagRecord:
     def __init__(self):
@@ -97,7 +94,7 @@ def error_callback(data):
     bag_file = usable_bag_files[0]
 
     #Specify the topics and name (set to current rostime) to be recorded to the rosbag inside a shell command to record to a rosbag
-    command = 'rosbag filter ' + bag_file + '.bag replay.bag "t.to_sec() >= ' + str(float(current_time - 15)) + '"'
+    command = 'rosbag filter ' + bag_file + '.bag replay.bag "t.to_sec() <= ' + str(float(current_time - 15)) + '"'
 
     record_folder = rospkg.RosPack().get_path('video_logging') + '/bag_files'
 
@@ -108,22 +105,90 @@ def error_callback(data):
     p.wait()
     
     #FOLLOWING CODE MIGHT BE ALTERED
-    #Adjust topic to replay topic
+    #Adjust topic to replay 
+    i = 0
     with rosbag.Bag(rospkg.RosPack().get_path('video_logging') + '/bag_files/replay_altered.bag', 'w') as Y:
         for topic, msg, t in rosbag.Bag(rospkg.RosPack().get_path('video_logging') + '/bag_files/replay.bag'):
-            if topic == "/camera/color/image_raw/compressed":
-                Y.write("replay/camera/color/image_raw/compressed", msg, t)
+            if i == 0:
+                start_time = t
+                current_time = 0
             else:
-                Y.write(topic, msg, t)
+                current_time = t - start_time
+            if topic == "/camera/color/image_raw/compressed":
+                Y.write("replay/camera/color/image_raw/compressed", msg, current_time)
+            else:
+                Y.write(topic, msg, current_time)
+
 
     #play rosbag
-    command = 'rosbag play -l replay_altered.bag'
+    #command = 'rosbag play -l replay_altered.bag'
 
     #Start subprocess to play the replay data on loop
-    p = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True, cwd=record_folder,
-                                      executable='/bin/bash')
+    #p = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True, cwd=record_folder, executable='/bin/bash')
+
+    bag = rosbag.Bag(rospkg.RosPack().get_path('video_logging') + '/bag_files/replay_altered.bag')
+    total_messages = bag.get_message_count("replay/camera/color/image_raw/compressed")
+    #As more topics are required, should define in an array somewhere with topics and message types to iterate and start publishers. For now, is fine.
+    #Open up publisher for camera feed
+    camera_pub = rospy.Publisher("replay/camera/color/image_raw/compressed", CompressedImage, queue_size=10)
+    pause_sub = rospy.Subscriber("/pause", Bool, pause_callback)
+    scrub_sub = rospy.Subscriber("/scrub", Bool, scrub_callback)
+    scrub_percentage_sub = rospy.Subscriber("/scrub_percentage", float, scrub_percentage_callback)
+    exit_sub = rospy.Subscriber("/exit", Bool, exit_callback)
+
+    bag_start_time = bag.get_start_time()
+    bag_end_time = bag.get_end_time()
+    bag_total_time = bag_end_time - bag_start_time
+    scrub_percentage = 0
+    exit = 0
+    scrub = 0
+    pause = 0
+
+    while not exit:
+        print(scrub_percentage)
+        if scrub == 1:
+            while scrub == 1:
+                sleep(0.00001)
+            current_bag_start_time = bag_start_time + bag_total_time*scrub_percentage
+        else:
+            current_bag_start_time = bag_start_time
+        read_bag(bag,current_bag_start_time,camera_pub)
+
+            
     rospy.sleep(5.)
     return
+
+def read_bag(bag, time_to_start, camera_pub):
+    for topic, msg, t in bag.read_messages(start_time = time_to_start):
+        time_now = time.time()
+        while time.time() < t + time_now:
+            while pause == 1 & scrub == 0:
+                sleep(0.00001)
+            if scrub == 1:
+                return
+        camera_pub.publish(msg)
+    return
+
+def pause_callback(data):
+    if data:
+        pause = 1
+    else:
+        pause = 0
+
+def scrub_callback(data):
+    if data:
+        scrub = 1
+    else:
+        scrub = 0
+
+def scrub_percentage_callback(data):
+    scrub_percentage = data
+
+def exit_callback(data):
+    if data:
+        exit = 1
+    else:
+        exit = 0
 
 if __name__ == '__main__':
     #parser = argparse.ArgumentParser(description='Code to record video footage of panda for up to 5 minutes')
@@ -147,7 +212,7 @@ if __name__ == '__main__':
         rosbag_record.start_ros_node()
 
         #Record to that bag file for 60 seconds
-        rospy.sleep(30.)
+        rospy.sleep(5.)
 
         #Check existing rosbags to see if any have existed for too long
         duration_time = rospy.Time.now().secs - 300 #5 minutes
@@ -164,7 +229,7 @@ if __name__ == '__main__':
         if rosbag_record2.name != "":
             rosbag_record2.terminate_ros_node("/record")
         rosbag_record2.start_ros_node()        
-        rospy.sleep(30.)
+        rospy.sleep(5.)
 
         #Stop recording to that bag file
         rosbag_record.terminate_ros_node("/record")
