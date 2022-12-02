@@ -55,6 +55,7 @@ def stop_recording_handler():
     assert retcode == 0, "List command returned %d" % retcode
 
     for string in list_output.split("\n"):
+        print(string)
         if (string.startswith("/record")):
             os.system("rosnode kill " + string)
 
