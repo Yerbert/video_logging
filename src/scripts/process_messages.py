@@ -5,6 +5,7 @@ import rospy as rp
 # import open3d as o3d
 from sensor_msgs.msg import PointCloud2, CompressedImage
 from sensor_msgs import point_cloud2 as pc2
+from tf2_msgs.msg import TFMessage
 
 
 class VideoProcessor:
@@ -17,8 +18,7 @@ class VideoProcessor:
         # Reduce from 30fps to 15fps
         self.counter = (self.counter + 1) % 2
         if (self.counter==0):
-            return
-        self.pub.publish(msg)
+            self.pub.publish(msg)
         
 
 class PointCloudProcessor:
@@ -29,7 +29,7 @@ class PointCloudProcessor:
         self.sub = rp.Subscriber('/velodyne_points', PointCloud2, self.callback)
     
     def callback(self, msg):
-        self.counter = (self.counter + 1) % 5
+        self.counter = (self.counter + 1) % 3
         if self.counter==0:
             new_msg = pc2.create_cloud_xyz32(msg.header, pc2.read_points_list(msg, ['x','y','z'])) # extract only x,y,z data
             self.pub.publish(new_msg)
@@ -38,10 +38,22 @@ class PointCloudProcessor:
             print("  Original size:     {}".format(len(msg.data)))
             print("  New size:          {}".format(len(new_msg.data)))
 
+class TransformProcessor:
+    def __init__(self):
+        self.counter = 0
+        self.pub = rp.Publisher('/tf/processed', TFMessage, queue_size=10)
+        self.sub = rp.Subscriber('/tf', TFMessage, self.callback)
+    
+    def callback(self, msg):
+        self.counter = (self.counter + 1) % 4
+        if self.counter==0:
+            self.pub.publish(msg)
+
 
 def process_messages():
     p = PointCloudProcessor()
     v = VideoProcessor()
+    t = TransformProcessor()
     rp.spin()
 
 
