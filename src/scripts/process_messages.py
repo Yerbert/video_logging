@@ -72,8 +72,7 @@ class VideoStreamProcessor:
         img_resized = img.resize(self.new_image_size, Image.ANTIALIAS)
         img_data = io.BytesIO()
         img_resized.save(img_data, format='JPEG')
-        img_data_bytearray = img_data.getvalue()
-        msg.data = img_data_bytearray
+        msg.data = img_data.getvalue()
         img.close()
         self.pub.publish(msg)
 
