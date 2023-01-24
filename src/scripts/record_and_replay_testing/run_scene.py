@@ -38,7 +38,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
     # Working Directory (CHANGE THIS)
-    cwd_path = "/home/kelvin/ar_vr_ws/recorded_bag_files"
+    cwd_path = os.getcwd()
 
     #Initialise ROS node to enable communication with other nodes
     rospy.init_node('rosbag_replay')
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     p1 = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True, cwd=cwd_path, executable='/bin/bash', preexec_fn=os.setsid)
 
     # Start the infologs file
-    command = "python3 " + args.infologs
+    command = "python " + args.infologs
     p2 = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True, cwd=cwd_path, executable='/bin/bash', preexec_fn=os.setsid)
 
     # Infinite loop to keep parent process running
