@@ -8,18 +8,18 @@ import io
 
 class PointCloudProcessor:
     def __init__(self):
-        self.sub = rp.Subscriber('/velodyne_points/', PointCloud2, self.callback)
+        self.sub = rp.Subscriber('/velodyne_points', PointCloud2, self.callback)
         self.pub = rp.Publisher('/velodyne_points/processed', PointCloud2, queue_size=10)
         self.counter = 0
-        self.accept_every_nth_msg = 2
-        self.ds = 2     # point downsample factor
+        self.accept_every_nth_msg = 3 # any lower than 3 and point cloud lags on HoloLens
+        self.ds = 1     # point downsample factor
     
     def callback(self, msg):
         self.counter = (self.counter + 1) % self.accept_every_nth_msg
         if (self.counter!=0):
             return
 
-        new_points = [point for point in pc2.read_points(msg) if self.is_acceptable_point(point)][self.ds-1::self.ds]
+        new_points = [point for point in pc2.read_points_list(msg, ['x','y','z']) if self.is_acceptable_point(point)][self.ds-1::self.ds]
         new_msg = pc2.create_cloud_xyz32(msg.header, new_points)
         self.pub.publish(new_msg)
     
@@ -48,12 +48,12 @@ class PointCloudProcessor:
 
 class VideoStreamProcessor:
     def __init__(self):
-        self.sub = rp.Subscriber('/camera/color/image_raw/compressed', CompressedImage, self.callback)
+        self.sub = rp.Subscriber('/camera/color/image_raw/compressed/', CompressedImage, self.callback)
         self.pub = rp.Publisher('/camera/color/image_raw/compressed/processed', CompressedImage, queue_size=10)
         self.counter = 0
         self.accept_every_nth_msg = 2
         self.old_msg_size = (640,480)
-        self.new_image_size = (480, 360)
+        self.new_image_size = (640, 480)
     
     def callback(self, msg):
 
