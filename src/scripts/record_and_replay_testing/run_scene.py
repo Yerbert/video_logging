@@ -17,7 +17,7 @@ import rosbag
 from sensor_msgs.msg import Image, CompressedImage
 from std_msgs.msg import Int32, Float32, String, Bool
 from tf2_msgs.msg import TFMessage
-from time import sleep
+# from time import sleep
 
 # Global Variables
 p1 = None
@@ -33,8 +33,14 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 # Pause flipflop mechanism
-def pause_callback(data):
+def pause_callback(msg):
+
     global pause,service,p2Process
+
+    # Skip repeated/unsynced pauses
+    if (msg.data == pause):
+        return
+
     pause = not pause
     if pause:
         rospy.loginfo("Paused")
@@ -72,17 +78,20 @@ if __name__ == '__main__':
     # Find the last /tf rostopic and publish it
     tf_offset_msg = None
     for topic, msg, t in rosbag.Bag(args.rosbag).read_messages():
-        if topic == "tf":
-            tf_offset_msg = msg
+        if topic == "/tf":
+            for tf in msg.transforms:
+                if tf.child_frame_id == "base_link" and tf.header.frame_id == "odom":
+                    # print(msg)
+                    tf_offset_msg = msg
     tf_offset_pub.publish(tf_offset_msg)
 
     # Sleep 2 seconds
-    sleep(2.0)
+    rospy.sleep(2.0)
 
     # Start subprocess to play rosbag
     command = "rosbag play -l " + args.rosbag
     p1 = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True, cwd=cwd_path, executable='/bin/bash', preexec_fn=os.setsid)
-    sleep(0.5)
+    rospy.sleep(0.5)
 
     # Find the rosservice for pausing/playing rosbag
     list_cmd = subprocess.Popen("rosservice list", shell=True, stdout=subprocess.PIPE)
@@ -100,12 +109,13 @@ if __name__ == '__main__':
     p2Process = psutil.Process(pid=p2.pid)
 
     # Infinite loop to keep parent process running and listen in to pause/play functionality
-    while True:
+    rospy.spin()
+    # while True:
 
-        while(pause):
-            sleep(0.5)
+    #     while(pause):
+    #         sleep(0.5)
 
-        sleep(0.5)
+    #     sleep(0.5)
     
 
     
