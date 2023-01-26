@@ -12,8 +12,8 @@ def infologs():
         pub.publish(String("3. Exiting arena..."))
         rp.sleep(9)
         pub.publish(String("4. ERROR [Navigation] - No suitable path to destination"))
-        rp.sleep(2.332065)
         
 if __name__ == "__main__":
     rp.init_node("infologger", anonymous=True)
     infologs()
+    rp.spin()
