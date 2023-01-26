@@ -72,18 +72,18 @@ if __name__ == '__main__':
     rospy.init_node('rosbag_replay')
 
     #Initialize Rostopics publisher and subscribers
-    tf_offset_pub = rospy.Publisher("/tf/offset", TFMessage, queue_size=10)
+    tf_offset_pub = rospy.Publisher("/tf/path", TFMessage, queue_size=10)
     pause_sub = rospy.Subscriber("/pause", Bool, pause_callback)
 
     # Find the last /tf rostopic and publish it
-    tf_offset_msg = None
+    tf_offset_transforms = []
     for topic, msg, t in rosbag.Bag(args.rosbag).read_messages():
         if topic == "/tf":
             for tf in msg.transforms:
                 if tf.child_frame_id == "base_link" and tf.header.frame_id == "odom":
                     # print(msg)
-                    tf_offset_msg = msg
-    tf_offset_pub.publish(tf_offset_msg)
+                    tf_offset_transforms.append(tf)
+    tf_offset_pub.publish(TFMessage(tf_offset_transforms))
 
     # Sleep 2 seconds
     rospy.sleep(2.0)
@@ -110,14 +110,4 @@ if __name__ == '__main__':
 
     # Infinite loop to keep parent process running and listen in to pause/play functionality
     rospy.spin()
-    # while True:
-
-    #     while(pause):
-    #         sleep(0.5)
-
-    #     sleep(0.5)
-    
-
-    
-
     

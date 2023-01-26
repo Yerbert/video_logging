@@ -39,7 +39,7 @@ class PointCloudProcessor:
         if max([abs(p) for p in point]) > max_dist:
             return False
         
-        # drop point if at floor level
+        # drop point if at/below floor level
         if point[2] <= floor_y:
             return False
         
