@@ -4,24 +4,14 @@ import pyrosbag
 import sys
 from std_msgs.msg import Bool
 from tf2_msgs.msg import TFMessage
-from geometry_msgs.msg import Vector3, PoseArray, Pose
-import time
 
 class PauseSubscriber():
     def __init__(self, rosbag_process):
         self.sub = rp.Subscriber("/pause", Bool, self.callback)
         self.rosbag = rosbag_process
         self.paused = False
-        self.last_msg_time = time.time()
-        self.msg_filter_delay_seconds = 0.5
     
     def callback(self, msg):
-
-        # "Debounce" filter
-        if time.time() - self.last_msg_time < self.msg_filter_delay_seconds:
-            return
-
-        # Ignore repeated messages
         if msg.data == self.paused:
             return
 
@@ -30,11 +20,6 @@ class PauseSubscriber():
         else:
             self.rosbag.pause()
         self.paused = not self.paused
-
-# def publish_tfs(rosbag_name):
-#     tf_pub = rp.Publisher('/path/full', Vector3, queue_size=10)
-#     tf_pub.publish(Vector3(0,0,0))
-#     rp.sleep(2)
 
 def publish_tfs(rosbag_name):
     tf_pub = rp.Publisher("/tf/path", TFMessage, queue_size=10)
@@ -45,8 +30,8 @@ def publish_tfs(rosbag_name):
             if tf.child_frame_id == "base_link" and tf.header.frame_id == "odom":
                 tf_path.append(tf)
                 break
-    print(len(tf_path))
     tf_pub.publish(TFMessage(tf_path))
+    
 
 if __name__ == "__main__":
 
