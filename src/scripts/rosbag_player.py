@@ -22,14 +22,13 @@ class PauseSubscriber():
         self.paused = not self.paused
 
 def publish_tfs(rosbag_name):
-    tf_pub = rp.Publisher("/tf/path", TFMessage, queue_size=10)
+    tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
 
     tf_path = []
     for topic, msg, t in rosbag.Bag(rosbag_name).read_messages(topics=["/tf"]):
         for tf in msg.transforms:
-            if tf.child_frame_id == "base_link" and tf.header.frame_id == "odom":
+            if (tf.child_frame_id == "base_link" and tf.header.frame_id == "odom") or (tf.child_frame_id == "odom" and tf.header.frame_id == "map"):
                 tf_path.append(tf)
-                break
     tf_pub.publish(TFMessage(tf_path))
     
 
