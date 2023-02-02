@@ -11,7 +11,7 @@ class PointCloudProcessor:
         self.sub = rp.Subscriber('/velodyne_points', PointCloud2, self.callback)
         self.pub = rp.Publisher('/velodyne_points/processed', PointCloud2, queue_size=10)
         self.counter = 0
-        self.accept_every_nth_msg = 3 # any lower than 3 and point cloud lags on HoloLens
+        self.accept_every_nth_msg = 3 # any lower than 3 and point cloud lags
         self.ds = 1     # point downsample factor
     
     def callback(self, msg):
@@ -93,5 +93,5 @@ class TFProcessor:
 
 if __name__ == "__main__":
     rp.init_node("ros_message_processor", anonymous=True)
-    processors = [ PointCloudProcessor(), VideoStreamProcessor(), TFProcessor() ]
+    processors = [ PointCloudProcessor(), VideoStreamProcessor() ]
     rp.spin()
