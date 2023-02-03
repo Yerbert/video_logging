@@ -9,9 +9,9 @@ import io
 class PointCloudProcessor:
     def __init__(self):
         self.sub = rp.Subscriber('/velodyne_points', PointCloud2, self.callback)
-        self.pub = rp.Publisher('/velodyne_points/processed', PointCloud2, queue_size=10)
+        self.pub = rp.Publisher('/velodyne_points/processed', PointCloud2, queue_size=1)
         self.counter = 0
-        self.accept_every_nth_msg = 3 # any lower than 3 and point cloud lags
+        self.accept_every_nth_msg = 2 # any lower than 3 and point cloud lags
         self.ds = 1     # point downsample factor
     
     def callback(self, msg):
@@ -49,7 +49,7 @@ class PointCloudProcessor:
 class VideoStreamProcessor:
     def __init__(self):
         self.sub = rp.Subscriber('/camera/color/image_raw/compressed/', CompressedImage, self.callback)
-        self.pub = rp.Publisher('/camera/color/image_raw/compressed/processed', CompressedImage, queue_size=10)
+        self.pub = rp.Publisher('/camera/color/image_raw/compressed/processed', CompressedImage, queue_size=1)
         self.counter = 0
         self.accept_every_nth_msg = 2
         self.old_msg_size = (640,480)
@@ -79,7 +79,7 @@ class VideoStreamProcessor:
 
 class TFProcessor:
     def __init__(self):
-        self.pub = rp.Publisher('/tf/processed', TFMessage, queue_size=10)
+        self.pub = rp.Publisher('/tf/processed', TFMessage, queue_size=1)
         self.sub = rp.Subscriber('/tf', TFMessage, self.callback)
         self.counter = 0
         self.accept_every_nth_msg = 2
