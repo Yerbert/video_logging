@@ -7,9 +7,10 @@ import subprocess
 import os
 import sys
 import signal
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float32
 from tf2_msgs.msg import TFMessage
 from time import sleep
+from rosgraph_msgs.msg import Clock
 
 #Global
 tcp = False
@@ -30,6 +31,20 @@ class PauseSubscriber():
             self.rosbag.pause()
         self.paused = not self.paused
 
+class ProgressClock():
+    def __init__(self, rosbag_name):
+        bag = rosbag.Bag(rosbag_name, 'r')
+        self.start_time = bag.get_start_time()
+        self.end_time = bag.get_end_time()
+        self.duration = self.end_time - self.start_time
+        self.clock_sub = rp.Subscriber("/clock", Clock, self.callback)
+        self.progress_pub = rp.Publisher("/progress", Float32, queue_size=10)
+
+    def callback(self, msg):
+        progress = ((msg.clock.secs + msg.clock.nsecs / 1e9) - self.start_time) / self.duration
+        self.progress_pub.publish(Float32(progress))
+        
+    
 def publish_tfs(rosbag_name):
     tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
 
@@ -47,11 +62,11 @@ def signal_handler(sig, frame):
 
 if __name__ == "__main__":
 
-
     # Get rosbag name and tcp option
     rosbag_name = sys.argv[1]
-    if len(sys.argv) == 3:
-        tcp = sys.argv[2]
+    if len(sys.argv) > 2:
+        if ("tcp" in sys.argv):
+            tcp = True 
 
     # Signal Handler to kill subprocesses
     signal.signal(signal.SIGINT, signal_handler)
@@ -82,9 +97,14 @@ if __name__ == "__main__":
     # Publish all TFs for path visualisation
     publish_tfs(rosbag_name)
 
+    # Start Progress Clock
+    clock = ProgressClock(rosbag_name)
+
     # Start rosbag
     rosbag_player = pyrosbag.BagPlayer(rosbag_name)
     pause = PauseSubscriber(rosbag_player)
-    rosbag_player.play(loop=True)
+    rosbag_player.play(loop=True, publish_clock=True)
     rp.spin()
+
+
     
