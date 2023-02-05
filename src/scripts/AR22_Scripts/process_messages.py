@@ -26,7 +26,7 @@ class PointCloudProcessor:
     def is_acceptable_point(self, point):
         """
         Culls points further than 'max_dist' and lower than 'floor_y'
-        param p: (x,y,z)
+        param point: tuple (x,y,z)
         """
         accept_all_points = False
         max_dist = 4
@@ -93,5 +93,5 @@ class TFProcessor:
 
 if __name__ == "__main__":
     rp.init_node("ros_message_processor", anonymous=True)
-    processors = [ PointCloudProcessor(), VideoStreamProcessor() ]
+    processors = [ VideoStreamProcessor() ]
     rp.spin()
