@@ -4,6 +4,7 @@ from collections import namedtuple
 from std_msgs.msg import String, Bool
 import sys
 import shutil
+import os
 
 InfoLog = namedtuple("InfoLog", ["time", "message"])
 
@@ -23,10 +24,10 @@ def insert_start_message(bag_name):
 if __name__ == "__main__":
 
     messages = [
-        InfoLog(1,  "1) Payload on board: YES"),
-        InfoLog(5,  "2) Payload on board: YES"),
-        InfoLog(14, "3) Arriving at destination..."),
-        InfoLog(17, "4) Payload on board: NO")
+        InfoLog(1,  "[INFO] Navigating to Goal A."),
+        InfoLog(7,  "[INFO] Rerouting path."),
+        InfoLog(8,  "[INFO] Rerouting path."),
+        InfoLog(10,  "[IERROR] Failed to navigate to Goal A."),
     ]
 
     bag_name = sys.argv[1]
@@ -34,4 +35,7 @@ if __name__ == "__main__":
     shutil.copyfile(bag_name, new_bag_name)
     insert_infologs(new_bag_name, messages)
     insert_start_message(new_bag_name)
+
+    # Fix rosbag timings due to inserting messages asynchronously
+    os.system("rosbag fix " + new_bag_name + " " + new_bag_name)
 
