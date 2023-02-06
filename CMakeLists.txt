@@ -137,7 +137,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/video_logging_node.cpp)
-add_executable(process_pointcloud src/scripts/AR22_Scripts/process_pointcloud.cpp)
+add_executable(process_messages src/scripts/AR22_Scripts/process_messages.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -153,7 +153,7 @@ add_executable(process_pointcloud src/scripts/AR22_Scripts/process_pointcloud.cp
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(process_pointcloud ${catkin_LIBRARIES})
+target_link_libraries(process_messages ${catkin_LIBRARIES})
 
 #############
 ## Install ##

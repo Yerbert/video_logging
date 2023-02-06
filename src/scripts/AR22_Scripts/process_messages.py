@@ -48,7 +48,7 @@ class PointCloudProcessor:
 
 class VideoStreamProcessor:
     def __init__(self):
-        self.sub = rp.Subscriber('/camera/color/image_raw/compressed/', CompressedImage, self.callback)
+        self.sub = rp.Subscriber('/camera/color/image_raw/compressed', CompressedImage, self.callback)
         self.pub = rp.Publisher('/camera/color/image_raw/compressed/processed', CompressedImage, queue_size=1)
         self.counter = 0
         self.accept_every_nth_msg = 2
