@@ -15,22 +15,6 @@ from rosgraph_msgs.msg import Clock
 #Global
 tcp = False
 
-class PauseSubscriber():
-    def __init__(self, rosbag_process):
-        self.sub = rp.Subscriber("/pause", Bool, self.callback)
-        self.rosbag = rosbag_process
-        self.paused = False
-    
-    def callback(self, msg):
-        if msg.data == self.paused:
-            return
-
-        if self.paused:
-            self.rosbag.resume()
-        else:
-            self.rosbag.pause()
-        self.paused = not self.paused
-
 class ProgressClock():
     def __init__(self, rosbag_name):
         bag = rosbag.Bag(rosbag_name, 'r')
@@ -56,8 +40,9 @@ def publish_tfs(rosbag_name):
     tf_pub.publish(TFMessage(tf_path))
 
 def signal_handler(sig, frame):
+    os.system("rostopic pub -1 /infologs/end std_msgs/Bool true")
     if (tcp):
-        os.killpg(os.getpgid(p.pid), signal.SIGTERM) 
+        os.killpg(os.getpgid(p.pid), signal.SIGTERM)
     sys.exit(0)
 
 if __name__ == "__main__":
@@ -102,7 +87,6 @@ if __name__ == "__main__":
 
     # Start rosbag
     rosbag_player = pyrosbag.BagPlayer(rosbag_name)
-    pause = PauseSubscriber(rosbag_player)
     rosbag_player.play(loop=True, publish_clock=True)
     rp.spin()
 
