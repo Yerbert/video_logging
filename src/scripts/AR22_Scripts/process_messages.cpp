@@ -4,14 +4,29 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/CompressedImage.h>
-#include <iostream>
+#include <std_msgs/Float32.h>
 
-int pointcloud_downsample = 1;
+#include <iostream>
+#include <math.h>
+
+#include <tf2_msgs/TFMessage.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <geometry_msgs/Quaternion.h>
+
+int pointcloud_downsample = 1; // downsample factor. 1 = no downsampling
 int pointcloud_counter = 0;
-int video_downsample = 1;
+int video_downsample = 2;
 int video_counter = 0;
 ros::Publisher pointcloud_pub;
 ros::Publisher video_pub;
+ros::Publisher tf_pub;
+
+//testing
+double rolling_average_angle = 0;
+ros::Publisher angle_base_pub;
+ros::Publisher angle_mean_pub;
+
 
 bool is_acceptable_point(const pcl::PointXYZ& point)
 {
@@ -39,6 +54,73 @@ bool is_acceptable_point(const pcl::PointXYZ& point)
 
 	return true;
 }
+
+// double update_rolling_mean(double prev_mean, double new_value, int window_size) {
+//     double x = cos(prev_mean) + cos(new_value);
+//     double y = sin(prev_mean) + sin(new_value);
+//     double mean_angle = atan2(y / window_size, x / window_size);
+//     return mean_angle;
+// }
+
+
+tf2_msgs::TFMessage flatten_tf(const tf2_msgs::TFMessageConstPtr& msg) {
+
+	tf2::Quaternion quat(
+		msg->transforms[0].transform.rotation.x,
+		msg->transforms[0].transform.rotation.y,
+		msg->transforms[0].transform.rotation.z,
+		msg->transforms[0].transform.rotation.w);
+
+	tf2::Matrix3x3 m(quat);
+	double roll, pitch, yaw;
+	m.getRPY(roll, pitch, yaw);
+
+	tf2::Quaternion quat_converted;
+	quat_converted.setRPY(0, 0, yaw);
+
+	
+
+
+	// if (msg->transforms[0].child_frame_id=="base_link") {
+
+	// 	rolling_average_angle = update_rolling_mean(rolling_average_angle, yaw, 10000);
+
+	// 	std_msgs::Float32 angle_mean;
+	// 	angle_mean.data = rolling_average_angle;		
+	// 	angle_mean_pub.publish(angle_mean);
+
+	// 	std_msgs::Float32 angle_base;
+	// 	angle_base.data = yaw;		
+	// 	angle_base_pub.publish(angle_base);
+	// }
+
+	std::string child_frame_id = msg->transforms[0].child_frame_id;
+	std::string parent_frame_id = msg->transforms[0].header.frame_id;
+	// std::string new_child_frame_id = child_frame_id;
+	std::string new_child_frame_id = "flat_" + child_frame_id;
+	// std::string new_parent_frame_id = parent_frame_id;
+	std::string new_parent_frame_id = (parent_frame_id == "map") ? "map" : "flat_" + parent_frame_id;
+
+	// new tf
+	geometry_msgs::TransformStamped tf_converted_stamped;
+	tf_converted_stamped.header = msg->transforms[0].header;
+	tf_converted_stamped.header.frame_id = new_parent_frame_id;
+	tf_converted_stamped.child_frame_id = new_child_frame_id;
+	tf_converted_stamped.transform.translation = msg->transforms[0].transform.translation;
+	// set height to zero
+	tf_converted_stamped.transform.translation.z = 0;
+	// make x,y rotation flat
+	tf_converted_stamped.transform.rotation.x = quat_converted.x();
+	tf_converted_stamped.transform.rotation.y = quat_converted.y();
+	tf_converted_stamped.transform.rotation.z = quat_converted.z();
+	tf_converted_stamped.transform.rotation.w = quat_converted.w();
+
+	tf2_msgs::TFMessage tf_output_msg;
+	tf_output_msg.transforms.push_back(tf_converted_stamped);
+
+	return tf_output_msg;
+}
+
 
 void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 {
@@ -79,6 +161,15 @@ void video_callback(const sensor_msgs::CompressedImageConstPtr& msg)
 	video_pub.publish(msg);
 }
 
+void tf_callback(const tf2_msgs::TFMessageConstPtr& msg)
+{
+	if (msg->transforms[0].child_frame_id == "base_link" || msg->transforms[0].child_frame_id == "odom") {
+		tf_pub.publish(flatten_tf(msg));
+	} else {
+		// tf_pub.publish(msg);
+	}
+}
+
 
 int main(int argc, char** argv)
 {
@@ -92,6 +183,12 @@ int main(int argc, char** argv)
 	std::string video_intopic = "/camera/color/image_raw/compressed";
 	std::string video_outtopic = "/camera/color/image_raw/compressed/processed";
 
+	// std::string tf_intopic = "/tf";
+	// std::string tf_outtopic = "/tf/flattened";
+
+	std::string tf_intopic = "/tf";
+	std::string tf_outtopic = "/tf";
+
 	pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>(pointcloud_outtopic, 1);
 	ros::Subscriber pointcloud_sub = nh.subscribe(pointcloud_intopic, 1, pointcloud_callback);
 	std::cout << "Republishing point clouds from \n  " << pointcloud_intopic << "\nto\n  " << pointcloud_outtopic << "\n";
@@ -99,6 +196,14 @@ int main(int argc, char** argv)
 	video_pub = nh.advertise<sensor_msgs::CompressedImage>(video_outtopic, 1);
 	ros::Subscriber video_sub = nh.subscribe(video_intopic, 1, video_callback);
 	std::cout << "Republishing video from \n  " << video_intopic << "\nto\n  " << video_outtopic << "\n";
+
+	tf_pub = nh.advertise<tf2_msgs::TFMessage>(tf_outtopic, 1);
+	ros::Subscriber tf_sub = nh.subscribe(tf_intopic, 1, tf_callback);
+	std::cout << "Republishing tf from \n  " << tf_intopic << "\nto\n  " << tf_outtopic << "\n";
+
+	// angle_base_pub = nh.advertise<std_msgs::Float32>("/angle_base", 1);
+	// angle_mean_pub = nh.advertise<std_msgs::Float32>("/angle_mean", 1);
+
 
 	ros::spin();
 
