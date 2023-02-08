@@ -1,0 +1,100 @@
+[  
+    {
+        "bag_name": "Bag_Files/Delocalisation.bag",
+        "infologs": [
+            {
+                "time": 1.02,
+                "text": "[ INFO ] Navigating to Goal A."
+            },
+            {
+                "time": 17.49,
+                "text": "[ INFO ] Successfully navigating to Goal A."
+            }
+        ]
+    },
+    {
+        "bag_name": "Bag_Files/DropPayload.bag",
+        "infologs": [
+            {
+                "time": 0.99,
+                "text": "[ INFO ] Navigating to Goal A."
+            },
+            {
+                "time": 8.31,
+                "text": "[ WARN ] Imminent impact, executing emergency manoeuvre."
+            },
+            {
+                "time": 17.82,
+                "text": "[ INFO ] Successfully navigating to Goal A."
+            }
+        ]
+    },
+    {
+        "bag_name": "Bag_Files/HumanObstruction.bag",
+        "infologs": [
+            {
+                "time": 1.12,
+                "text": "[ INFO ] Navigating to Goal B."
+            },
+            {
+                "time": 16.45,
+                "text": "[ WARN ] Obstruction in front of robot, rerouting path."
+            },
+            {
+                "time": 17.82,
+                "text": "[ ERROR ]  Rerouting failed."
+            },
+            {
+                "time": 21.71,
+                "text": "[ ERROR ] Failed to navigate to Goal B."
+            }
+        ]
+    },
+    {
+        "bag_name": "Bag_Files/MotorFailure.bag",
+        "infologs": [
+            {
+                "time": 1.09,
+                "text": "[ INFO ] Navigating to Goal B."
+            },
+            {
+                "time": 6.97,
+                "text": "[ INFO ] Rerouting path."
+            },
+            {
+                "time": 8.04,
+                "text": "[ INFO ]  Rerouting path."
+            },
+            {
+                "time": 10.11,
+                "text": "[ ERROR ] Failed to navigate to Goal A."
+            }
+        ]
+    },
+    {
+        "bag_name": "Bag_Files/PoppedTyre.bag",
+        "infologs": [
+            {
+                "time": 0.88,
+                "text": "[ INFO ] Navigating to Goal A."
+            },
+            {
+                "time": 17.90,
+                "text": "[ INFO ] Successfully navigating to Goal A."
+            }
+        ]
+    },
+    {
+        "bag_name": "Bag_Files/VelodyneFlicker.bag",
+        "infologs": [
+            {
+                "time": 1.00,
+                "text": "[ INFO ] Navigating to Goal A."
+            },
+            {
+                "time": 16.06,
+                "text": "[ INFO ] Successfully navigating to Goal A."
+            }
+        ]
+    }
+]
