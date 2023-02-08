@@ -21,23 +21,21 @@ def insert_start_message(bag_name):
     bag.write("/infologs/start", Bool(True), rostime.Time.from_seconds(start_time + 0.1))
     bag.close()
 
-if __name__ == "__main__":
-
-    bag_name = sys.argv[1]
-    messages = None
-
+def load_messages(bag_name):
     f = open('infologs.json')
     data = json.load(f)
     for bag in data:
         if(bag["bag_name"] == bag_name):
-            messages = bag["infologs"]
-            break
-    if(messages == None):
-        print("[ERROR] Infologs for this bag are undefined in infologs.json file!")
-        f.close()
-        sys.exit(0)
+            f.close()
+            return bag["infologs"]
+    print("[ERROR] Infologs for this bag are undefined in infologs.json file!")
     f.close()
+    sys.exit(0)
 
+if __name__ == "__main__":
+
+    bag_name = sys.argv[1]
+    messages = load_messages(bag_name)
     new_bag_name = bag_name[:-4] + "_with_infologs.bag"
     shutil.copyfile(bag_name, new_bag_name)
     insert_infologs(bag_name, new_bag_name, messages)

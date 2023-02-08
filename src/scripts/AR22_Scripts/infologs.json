@@ -41,11 +41,11 @@
                 "text": "[ WARN ] Obstruction in front of robot, rerouting path."
             },
             {
-                "time": 21.71,
+                "time": 17.82,
                 "text": "[ ERROR ]  Rerouting failed."
             },
             {
-                "time": 17.82,
+                "time": 21.71,
                 "text": "[ ERROR ] Failed to navigate to Goal B."
             }
         ]
