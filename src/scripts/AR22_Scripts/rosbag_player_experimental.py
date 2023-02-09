@@ -76,7 +76,7 @@ class Play_Rosbag():
     def signal_handler(self, sig, frame):
         self.infologs_pub.publish(1)
         self.listener.stop()
-        print("\nshutting down")
+        print("\n\nshutting down\n\n")
         sys.exit(0)
 
     def play_rosbag(self,rosbag_name,error):
@@ -99,6 +99,7 @@ class Play_Rosbag():
         #Start timer
         Timer.start = time()
         rp.sleep(1.)
+        print("\nPress enter when participant provides their diagnosis")
         self.listenToKeypress = 1
         while self.pause == 1:
             rp.sleep(0.1)
@@ -107,20 +108,20 @@ class Play_Rosbag():
         current_time = time()
         Timer.diagnoseTime = current_time - Timer.start
         rp.sleep(0.2)
-        print("\n\nRecorded Diagnosis time")
+        print("Recorded Diagnosis time")
         tcflush(sys.stdin, TCIFLUSH) # flush input stream
         #Did participant get the correct error/s?
         rp.sleep(0.5)
-        correct_error = input("\n\nDid participant get the correct error/s? Y/N:  ")
+        correct_error = input("Did participant get the correct error/s? Y/N:  ")
         cont = 0
         if correct_error == "Y" or correct_error == "N":
             cont = 1
         while cont == 0:
-            correct_error = input("\nPlease enter Y or N:  ")
+            correct_error = input("Error. Invalid Input. Please enter Y or N:  ")
             if correct_error == "Y" or correct_error == "N":
                 cont = 1
         if correct_error == "N":
-            errors_guessed = input("\n\nWhich errors did the participant guess?    ")
+            errors_guessed = input("Which errors did the participant guess?  ")
         else:
             errors_guessed = error
 
@@ -136,7 +137,7 @@ class Play_Rosbag():
 
         #Wait for participant to respond to follow up questions
         tcflush(sys.stdin, TCIFLUSH)
-        response = input("\n\nPress enter when participant has responded to all follow up questions:  ")
+        response = input("\nPress enter when participant has responded to all follow up questions:  ")
         
         #Shut down rosbag
         rosbag_player.stop()

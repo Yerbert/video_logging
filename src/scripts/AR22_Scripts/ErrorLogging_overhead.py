@@ -13,6 +13,8 @@ import pickle
 import argparse
 import rospkg
 import copy
+import sys
+import signal
 try:
     from builtins import input
 except ImportError:
@@ -30,20 +32,20 @@ class Errors:
                         "B": "Motor Failure",
                         "C": "Camera Sensor Failure",
                         "D": "Velodyne LIDAR Failure",
-                        "E": "Object in the Way",
+                        "E": "Obstacle in the Way",
                         "F": "Robot Senses Non-existent Object",
                         "G": "Dropped Payload",
                         "H": "Localisation Error"
     }
     rosbags = {
-                        "A": "PoppedTyre.bag",
-                        "B": "PoppedTyre.bag",
-                        "C": "PoppedTyre.bag",
-                        "D": "PoppedTyre.bag",
-                        "E": "PoppedTyre.bag",
-                        "F": "PoppedTyre.bag",
-                        "G": "PoppedTyre.bag",
-                        "H": "PoppedTyre.bag"
+                        "A": "FlatTyre.bag",
+                        "B": "MotorFailure.bag",
+                        "C": "CameraFailure.bag",
+                        "D": "VelodyneError.bag",
+                        "E": "HumanObstruction.bag",
+                        "F": "HumanObstruction.bag",
+                        "G": "DroppedPayload.bag",
+                        "H": "LocalisationError.bag"
                         }
 
 class Conditions:
@@ -91,8 +93,13 @@ class AR_error_diagnostics:
         self.conditions = ["","","","","","","",""]
         self.errors = ["","","","","","","",""]
 
+    def signal_handler(self, sig, frame):
+        print("\n\nshutting down\n\n")
+        sys.exit(0)
+
     def all_loop(self):
         #Find and open file with conditions and errors used by each participant
+        signal.signal(signal.SIGINT, self.signal_handler)
         pol_file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
         pol_filename = "pol.xlsx"
         pol_wb = load_workbook(os.path.join(pol_file_path, pol_filename))
@@ -112,10 +119,8 @@ class AR_error_diagnostics:
         for i in range(2,6):
             condition = int(pol_sheet.cell(row = participant_row, column = i).value)
             self.conditions[j] = str(condition)
-            print(self.conditions[j])
             j = j + 1
             self.conditions[j] = str(condition)
-            print(self.conditions[j])
             j = j + 1
 
 
@@ -123,24 +128,34 @@ class AR_error_diagnostics:
         for i in range(0,8):
             col = i+6
             self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
-            print(self.errors[i])
         
         workbook = MyWorkbook()
         #Go through each error
         for l, error in enumerate(self.errors):
             #Print error information here
-            print("The error will be " + Errors.types[self.errors[l]])
+            print("\nThe error will be " + Errors.types[self.errors[l]])
             #Print condition for operator to know which method is being used
             print("The condition required for this error is " + Conditions.conditions[self.conditions[l]])
-            wait = input("Prepare condition now, then press enter    ")
-
+            skip = input("Do you want to Skip this Error/condition? (Y/N)  ")
+            cont = 0
+            if skip == "Y" or skip == "N":
+                cont = 1
+            while cont != 1:
+                skip = input("Error. Invalid Input. Do you want to Skip this Error/condition? (Y/N)  ")
+                if skip == "Y" or skip == "N":
+                    cont = 1
+            if skip == "Y":
+                print("Skipping error " + Errors.types[self.errors[l]] + "\n\n\n")
+                continue
+            wait = input("\nPrepare condition now, then press any key to begin streaming data   ")
+            print("\n")
             #Once user has confirmed ready, switch to other file to start rosbag record
             rosbag_player = rosbag_player_experimental.Play_Rosbag()
             data_to_write = rosbag_player.play_rosbag(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]])
             
-            print(data_to_write)
             MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
-
+            print("Error " + str(l+1) + " completed\n\n\n")
+        print("All error conditions complete, exiting...\n\n")
 
 if __name__ == '__main__':
     rospy.init_node('error_diagnostics_user_study')
