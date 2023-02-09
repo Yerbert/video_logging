@@ -1,6 +1,6 @@
 [  
     {
-        "bag_name": "Bag_Files/Delocalisation.bag",
+        "bag_name": "Bag_Files/HardwareDelocalisation.bag",
         "infologs": [
             {
                 "time": 1.02,
@@ -13,18 +13,18 @@
         ]
     },
     {
-        "bag_name": "Bag_Files/DropPayload.bag",
+        "bag_name": "Bag_Files/DroppedPayload.bag",
         "infologs": [
             {
                 "time": 0.99,
                 "text": "[ INFO ] Navigating to Goal A."
             },
             {
-                "time": 8.31,
+                "time": 7.31,
                 "text": "[ WARN ] Imminent impact, executing emergency manoeuvre."
             },
             {
-                "time": 17.82,
+                "time": 16.82,
                 "text": "[ INFO ] Successfully navigating to Goal A."
             }
         ]
@@ -37,7 +37,7 @@
                 "text": "[ INFO ] Navigating to Goal B."
             },
             {
-                "time": 16.45,
+                "time": 15.45,
                 "text": "[ WARN ] Obstruction in front of robot, rerouting path."
             },
             {
@@ -45,8 +45,29 @@
                 "text": "[ ERROR ]  Rerouting failed."
             },
             {
-                "time": 21.71,
+                "time": 18.71,
                 "text": "[ ERROR ] Failed to navigate to Goal B."
+            }
+        ]
+    },
+    {
+        "bag_name": "Bag_Files/SoftwareDelocalisation.bag",
+        "infologs": [
+            {
+                "time": 1.09,
+                "text": "[ INFO ] Navigating to Goal A."
+            },
+            {
+                "time": 11.59,
+                "text": "[ INFO ] Rerouting path."
+            },
+            {
+                "time": 12.51,
+                "text": "[ ERROR ]  Rerouting failed."
+            },
+            {
+                "time": 14.11,
+                "text": "[ ERROR ] Failed to navigate to Goal A."
             }
         ]
     },
@@ -54,19 +75,11 @@
         "bag_name": "Bag_Files/MotorFailure.bag",
         "infologs": [
             {
-                "time": 1.09,
-                "text": "[ INFO ] Navigating to Goal B."
+                "time": 0.87,
+                "text": "[ INFO ] Navigating to Goal A."
             },
             {
-                "time": 6.97,
-                "text": "[ INFO ] Rerouting path."
-            },
-            {
-                "time": 8.04,
-                "text": "[ INFO ]  Rerouting path."
-            },
-            {
-                "time": 10.11,
+                "time": 15.66,
                 "text": "[ ERROR ] Failed to navigate to Goal A."
             }
         ]
@@ -79,7 +92,7 @@
                 "text": "[ INFO ] Navigating to Goal A."
             },
             {
-                "time": 17.90,
+                "time": 16.68,
                 "text": "[ INFO ] Successfully navigating to Goal A."
             }
         ]
@@ -93,6 +106,23 @@
             },
             {
                 "time": 16.06,
+                "text": "[ INFO ] Successfully navigating to Goal A."
+            }
+        ]
+    },
+    {
+        "bag_name": "Bag_Files/CameraFailure.bag",
+        "infologs": [
+            {
+                "time": 1.05,
+                "text": "[ INFO ] Navigating to Goal A."
+            },
+            {
+                "time": 10.22,
+                "text": "[ WARN ] Using LIDAR only for navigation."
+            },
+            {
+                "time": 16.38,
                 "text": "[ INFO ] Successfully navigating to Goal A."
             }
         ]
