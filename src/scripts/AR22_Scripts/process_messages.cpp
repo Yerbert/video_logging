@@ -8,11 +8,40 @@
 
 #include <iostream>
 #include <math.h>
+#include <queue>
 
 #include <tf2_msgs/TFMessage.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <geometry_msgs/Quaternion.h>
+
+class CircularMean {
+    public:
+        CircularMean(int size) : size(size), x(0), y(0) {}
+
+        void addAngle(double angle) {
+            x += cos(angle);
+            y += sin(angle);
+            angles.push(angle);
+            while (angles.size() > size) {
+                double old_angle = angles.front();
+                x -= cos(old_angle);
+                y -= sin(old_angle);
+                angles.pop();
+            }
+        }
+
+        double mean() {
+            // x /= angles.size();
+            // y /= angles.size();
+            return atan2(y / angles.size(), x / angles.size());
+        }
+
+    private:
+        int size;
+        double x, y;
+        std::queue<double> angles;
+};
 
 int pointcloud_downsample = 1; // downsample factor. 1 = no downsampling
 int pointcloud_counter = 0;
@@ -23,9 +52,14 @@ ros::Publisher video_pub;
 ros::Publisher tf_pub;
 
 //testing
-double rolling_average_angle = 0;
+// double rolling_average_angle = 0;
 ros::Publisher angle_base_pub;
 ros::Publisher angle_mean_pub;
+CircularMean baseLinkYawMovingAverage(2);
+CircularMean odomYawMovingAverage(2);
+
+
+
 
 
 bool is_acceptable_point(const pcl::PointXYZ& point)
@@ -35,32 +69,25 @@ bool is_acceptable_point(const pcl::PointXYZ& point)
 	*/
 
 	bool accept_all_points = false;
-	int max_dist = 4;
+	int max_dist = 6;
 	float floor_z = -0.38;
 
 	if (accept_all_points) {
-	return true;
+		return true;
 	}
 
 	// drop point if lies outside max_dist^3 cube
 	if ( abs(point.x) > max_dist || abs(point.y) > max_dist || abs(point.z) > max_dist ) {
-	return false;
+		return false;
 	}
 
 	// drop point if at/below floor level
 	if (point.z <= floor_z) {
-	return false;
+		return false;
 	}
 
 	return true;
 }
-
-// double update_rolling_mean(double prev_mean, double new_value, int window_size) {
-//     double x = cos(prev_mean) + cos(new_value);
-//     double y = sin(prev_mean) + sin(new_value);
-//     double mean_angle = atan2(y / window_size, x / window_size);
-//     return mean_angle;
-// }
 
 
 tf2_msgs::TFMessage flatten_tf(const tf2_msgs::TFMessageConstPtr& msg) {
@@ -75,24 +102,31 @@ tf2_msgs::TFMessage flatten_tf(const tf2_msgs::TFMessageConstPtr& msg) {
 	double roll, pitch, yaw;
 	m.getRPY(roll, pitch, yaw);
 
+	// if (msg->transforms[0].child_frame_id=="base_link" || msg->transforms[0].child_frame_id=="odom") {
+
+	// 	if (msg->transforms[0].child_frame_id=="base_link") {
+	// 		baseLinkYawMovingAverage.addAngle(yaw);
+
+	// 		std_msgs::Float32 angle_base;
+	// 		angle_base.data = yaw;		
+	// 		angle_base_pub.publish(angle_base);
+
+	// 		// yaw = baseLinkYawMovingAverage.mean();
+
+	// 	}
+
+	// 	if (msg->transforms[0].child_frame_id=="odom") {
+
+	// 		std_msgs::Float32 angle_odom;
+	// 		angle_odom.data = yaw;
+	// 		angle_mean_pub.publish(angle_odom);
+
+	// 	}
+		
+	// }
+
 	tf2::Quaternion quat_converted;
 	quat_converted.setRPY(0, 0, yaw);
-
-	
-
-
-	// if (msg->transforms[0].child_frame_id=="base_link") {
-
-	// 	rolling_average_angle = update_rolling_mean(rolling_average_angle, yaw, 10000);
-
-	// 	std_msgs::Float32 angle_mean;
-	// 	angle_mean.data = rolling_average_angle;		
-	// 	angle_mean_pub.publish(angle_mean);
-
-	// 	std_msgs::Float32 angle_base;
-	// 	angle_base.data = yaw;		
-	// 	angle_base_pub.publish(angle_base);
-	// }
 
 	std::string child_frame_id = msg->transforms[0].child_frame_id;
 	std::string parent_frame_id = msg->transforms[0].header.frame_id;
@@ -107,6 +141,7 @@ tf2_msgs::TFMessage flatten_tf(const tf2_msgs::TFMessageConstPtr& msg) {
 	tf_converted_stamped.header.frame_id = new_parent_frame_id;
 	tf_converted_stamped.child_frame_id = new_child_frame_id;
 	tf_converted_stamped.transform.translation = msg->transforms[0].transform.translation;
+
 	// set height to zero
 	tf_converted_stamped.transform.translation.z = 0;
 	// make x,y rotation flat
@@ -119,6 +154,7 @@ tf2_msgs::TFMessage flatten_tf(const tf2_msgs::TFMessageConstPtr& msg) {
 	tf_output_msg.transforms.push_back(tf_converted_stamped);
 
 	return tf_output_msg;
+
 }
 
 
@@ -140,8 +176,8 @@ void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 
 		if (is_acceptable_point(point)) {
 
-		pcl::PointXYZ new_point(point.x, point.y, point.z);
-		new_cloud.points.push_back(new_point);
+			pcl::PointXYZ new_point(point.x, point.y, point.z);
+			new_cloud.points.push_back(new_point);
 		}
 	}
 
@@ -165,11 +201,8 @@ void tf_callback(const tf2_msgs::TFMessageConstPtr& msg)
 {
 	if (msg->transforms[0].child_frame_id == "base_link" || msg->transforms[0].child_frame_id == "odom") {
 		tf_pub.publish(flatten_tf(msg));
-	} else {
-		// tf_pub.publish(msg);
 	}
 }
-
 
 int main(int argc, char** argv)
 {
@@ -201,9 +234,8 @@ int main(int argc, char** argv)
 	ros::Subscriber tf_sub = nh.subscribe(tf_intopic, 1, tf_callback);
 	std::cout << "Republishing tf from \n  " << tf_intopic << "\nto\n  " << tf_outtopic << "\n";
 
-	// angle_base_pub = nh.advertise<std_msgs::Float32>("/angle_base", 1);
-	// angle_mean_pub = nh.advertise<std_msgs::Float32>("/angle_mean", 1);
-
+	angle_base_pub = nh.advertise<std_msgs::Float32>("/angle_base", 1);
+	angle_mean_pub = nh.advertise<std_msgs::Float32>("/angle_mean", 1);
 
 	ros::spin();
 
