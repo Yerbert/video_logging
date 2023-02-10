@@ -1,3 +1,4 @@
-string[] camera_filters
-string[] velodyne_filters
-string[] tf_filters
+bool velodyne_flicker
+bool velodyne_blocked
+bool camera_blocked
+bool camera_flicker

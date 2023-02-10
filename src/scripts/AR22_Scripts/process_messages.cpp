@@ -5,6 +5,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/CompressedImage.h>
 #include <std_msgs/Float32.h>
+#include <video_logging/FilterSwitch.h>
 
 #include <iostream>
 #include <math.h>
@@ -15,33 +16,72 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <geometry_msgs/Quaternion.h>
 
-class CircularMean {
-    public:
-        CircularMean(int size) : size(size), x(0), y(0) {}
-
-        void addAngle(double angle) {
-            x += cos(angle);
-            y += sin(angle);
-            angles.push(angle);
-            while (angles.size() > size) {
-                double old_angle = angles.front();
-                x -= cos(old_angle);
-                y -= sin(old_angle);
-                angles.pop();
-            }
-        }
-
-        double mean() {
-            // x /= angles.size();
-            // y /= angles.size();
-            return atan2(y / angles.size(), x / angles.size());
-        }
-
-    private:
-        int size;
-        double x, y;
-        std::queue<double> angles;
+class Filter
+{
+	public:
+		Filter() {}
+		
+		virtual bool filter() {
+			// Returns true if filtered out
+			std::cout << "\nCalling base class filter\n";
+		}
+		
+		bool enabled = false;
 };
+
+
+class StutterFilter : public Filter
+{
+	protected:
+		int stutter_size;
+		bool block = false;
+		int count = 0;
+		int limit = 10;
+		int rand_max = 30;
+		int rand_min = 4;
+
+	public:
+
+		StutterFilter() : Filter() {
+			this->stutter_size = 1;
+		}
+
+		StutterFilter(int stutter_size) : Filter() {
+			this->stutter_size = stutter_size;
+		}
+
+		bool filter() override
+		{
+			count++;
+			if (count >= limit) {
+				count = 0;
+				limit = rand_int(rand_min, rand_max) * stutter_size;
+				block = !block;
+			}
+
+			return (this->enabled && block);
+
+		}
+
+		int rand_int(int min, int max) {
+			return (std::rand() % (max - min + 1)) + min;
+		}
+
+};
+
+
+class BlockFilter : public Filter
+{
+	public:
+
+		BlockFilter() : Filter() {}
+
+		bool filter() override
+		{
+			return this->enabled;
+		}
+};
+
 
 int pointcloud_downsample = 1; // downsample factor. 1 = no downsampling
 int pointcloud_counter = 0;
@@ -51,16 +91,10 @@ ros::Publisher pointcloud_pub;
 ros::Publisher video_pub;
 ros::Publisher tf_pub;
 
-//testing
-// double rolling_average_angle = 0;
-ros::Publisher angle_base_pub;
-ros::Publisher angle_mean_pub;
-CircularMean baseLinkYawMovingAverage(2);
-CircularMean odomYawMovingAverage(2);
-
-
-
-
+StutterFilter camera_flicker(1);
+BlockFilter camera_blocked;
+StutterFilter velodyne_flicker(1);
+BlockFilter velodyne_blocked;
 
 bool is_acceptable_point(const pcl::PointXYZ& point)
 {
@@ -102,29 +136,6 @@ tf2_msgs::TFMessage flatten_tf(const tf2_msgs::TFMessageConstPtr& msg) {
 	double roll, pitch, yaw;
 	m.getRPY(roll, pitch, yaw);
 
-	// if (msg->transforms[0].child_frame_id=="base_link" || msg->transforms[0].child_frame_id=="odom") {
-
-	// 	if (msg->transforms[0].child_frame_id=="base_link") {
-	// 		baseLinkYawMovingAverage.addAngle(yaw);
-
-	// 		std_msgs::Float32 angle_base;
-	// 		angle_base.data = yaw;		
-	// 		angle_base_pub.publish(angle_base);
-
-	// 		// yaw = baseLinkYawMovingAverage.mean();
-
-	// 	}
-
-	// 	if (msg->transforms[0].child_frame_id=="odom") {
-
-	// 		std_msgs::Float32 angle_odom;
-	// 		angle_odom.data = yaw;
-	// 		angle_mean_pub.publish(angle_odom);
-
-	// 	}
-		
-	// }
-
 	tf2::Quaternion quat_converted;
 	quat_converted.setRPY(0, 0, yaw);
 
@@ -158,8 +169,24 @@ tf2_msgs::TFMessage flatten_tf(const tf2_msgs::TFMessageConstPtr& msg) {
 }
 
 
+void filter_callback(const video_logging::FilterSwitch::ConstPtr& filter_msg) {
+
+	// std::cout << "\nFilter msg received:\n" << filter_msg;
+
+	velodyne_blocked.enabled = filter_msg->velodyne_blocked;
+	velodyne_flicker.enabled = filter_msg->velodyne_flicker;
+	camera_blocked.enabled = filter_msg->camera_blocked;
+	camera_flicker.enabled = filter_msg->camera_flicker;
+}
+
+
 void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 {
+	bool filtered = velodyne_blocked.filter() || velodyne_flicker.filter();
+	if (filtered) {
+		return;
+	}
+
 	pointcloud_counter = (pointcloud_counter + 1) % pointcloud_downsample;
 	if (pointcloud_counter != 0) {
 		return;
@@ -187,14 +214,19 @@ void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 }
 
 
-void video_callback(const sensor_msgs::CompressedImageConstPtr& msg)
+void video_callback(const sensor_msgs::CompressedImageConstPtr& video_msg)
 {
 	video_counter = (video_counter + 1) % video_downsample;
 	if (video_counter != 0) {
 		return;
 	}
 
-	video_pub.publish(msg);
+	bool filtered = camera_blocked.filter() || camera_flicker.filter();
+	if (filtered) {
+		return;
+	}
+
+	video_pub.publish(video_msg);
 }
 
 void tf_callback(const tf2_msgs::TFMessageConstPtr& msg)
@@ -222,6 +254,8 @@ int main(int argc, char** argv)
 	std::string tf_intopic = "/tf";
 	std::string tf_outtopic = "/tf";
 
+	std::string filter_intopic = "/filters";
+
 	pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>(pointcloud_outtopic, 1);
 	ros::Subscriber pointcloud_sub = nh.subscribe(pointcloud_intopic, 1, pointcloud_callback);
 	std::cout << "Republishing point clouds from \n  " << pointcloud_intopic << "\nto\n  " << pointcloud_outtopic << "\n";
@@ -234,8 +268,7 @@ int main(int argc, char** argv)
 	ros::Subscriber tf_sub = nh.subscribe(tf_intopic, 1, tf_callback);
 	std::cout << "Republishing tf from \n  " << tf_intopic << "\nto\n  " << tf_outtopic << "\n";
 
-	angle_base_pub = nh.advertise<std_msgs::Float32>("/angle_base", 1);
-	angle_mean_pub = nh.advertise<std_msgs::Float32>("/angle_mean", 1);
+	ros::Subscriber filter_sub = nh.subscribe(filter_intopic, 1, filter_callback);
 
 	ros::spin();
 

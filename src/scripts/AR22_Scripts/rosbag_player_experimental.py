@@ -16,6 +16,7 @@ from tf2_msgs.msg import TFMessage
 from time import sleep, time
 from rosgraph_msgs.msg import Clock
 from termios import tcflush, TCIFLUSH
+from video_logging.msg import FilterSwitch
 
 class Timer:
     start = 0
@@ -41,12 +42,14 @@ class ProgressClock():
         self.progress_pub.unregister()
         self.clock_sub.unregister()
         
-        
+
         
 class Run_Condition():
     def __init__(self):
         self.rate = rp.Rate(10.0) #10Hz
         self.infologs_pub = rp.Publisher('/infologs/end', Bool, queue_size=10)
+        self.tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
+        self.filter_pub = rp.Publisher("/filters", TFMessage, queue_size=10)
         self.pause = 1
         self.listenToKeypress = 0
         self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
@@ -63,14 +66,13 @@ class Run_Condition():
         return
 
     def publish_tfs(self, rosbag_name):
-        tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
 
         tf_path = []
         for topic, msg, t in rosbag.Bag(rosbag_name).read_messages(topics=["/tf"]):
             for tf in msg.transforms:
                 if (tf.child_frame_id == "base_link" and tf.header.frame_id == "odom") or (tf.child_frame_id == "odom" and tf.header.frame_id == "map"):
                     tf_path.append(tf)
-        tf_pub.publish(TFMessage(tf_path))
+        self.tf_pub.publish(TFMessage(tf_path))
 
     
     def signal_handler(self, sig, frame):
@@ -101,6 +103,19 @@ class Run_Condition():
     def start_livestream(self,error):
         print("placeholder")
 
+        velodyne_flicker = error in ["Velodyne LIDAR Failure"]
+        velodyne_blocked = error in []
+        camera_flicker   = error in []
+        camera_blocked   = error in ["Camera Sensor Failure"]
+        filters = FilterSwitch(
+            velodyne_flicker=velodyne_flicker,
+            velodyne_blocked=velodyne_blocked,
+            camera_flicker=camera_flicker,
+            camera_blocked=camera_blocked
+        )
+        self.filter_pub.publish(filters)
+
+
     def stop_livestream(self):
         print("placeholder")
 
@@ -109,6 +124,14 @@ class Run_Condition():
         rospkg.RosPack().get_path('video_logging') + '/bag_files'
         
         rosbag_name = rospkg.RosPack().get_path('video_logging') + '/bag_files/' + rosbag_name
+
+        # Disable all live-condition filters
+        self.filter_pub.publish(FilterSwitch(
+            velodyne_blocked=False,
+            velodyne_flicker=False,
+            camera_flicker=False,
+            camera_blocked=False
+        ))
 
         # Publish all TFs for path visualisation
         self.publish_tfs(rosbag_name)
