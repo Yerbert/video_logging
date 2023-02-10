@@ -52,9 +52,9 @@ class Conditions:
     name = None
     conditions = {
                         "1": "AR + replay",
-                        "2": "AR + no replay",
+                        "2": "AR + live",
                         "3": "Tablet + replay",
-                        "4": "Tablet + no replay"
+                        "4": "Tablet + live"
                         }
 
 class MyWorkbook:
@@ -136,22 +136,25 @@ class AR_error_diagnostics:
             print("\nThe error will be " + Errors.types[self.errors[l]])
             #Print condition for operator to know which method is being used
             print("The condition required for this error is " + Conditions.conditions[self.conditions[l]])
-            skip = input("Do you want to Skip this Error/condition? (Y/N)  ")
-            cont = 0
-            if skip == "Y" or skip == "N":
-                cont = 1
-            while cont != 1:
-                skip = input("Error. Invalid Input. Do you want to Skip this Error/condition? (Y/N)  ")
-                if skip == "Y" or skip == "N":
-                    cont = 1
-            if skip == "Y":
-                print("Skipping error " + Errors.types[self.errors[l]] + "\n\n\n")
+            cont = input("Do you want to perform this Error/condition? (Y/N)  ")
+            check = 0
+            if cont == "Y" or cont == "N":
+                check = 1
+            while check != 1:
+                cont = input("Error. Invalid Input. Do you want to perform this Error/condition? (Y/N)  ")
+                if cont == "Y" or cont == "N":
+                    check = 1
+            if cont == "N":
+                print("skipping error " + Errors.types[self.errors[l]] + "\n\n\n")
                 continue
+
             wait = input("\nPrepare condition now, then press any key to begin streaming data   ")
             print("\n")
-            #Once user has confirmed ready, switch to other file to start rosbag record
-            rosbag_player = rosbag_player_experimental.Play_Rosbag()
-            data_to_write = rosbag_player.play_rosbag(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]])
+            #Once user has confirmed ready, switch to other file to start condition
+            
+            
+            play_condition = rosbag_player_experimental.Run_Condition()
+            data_to_write = play_condition.run_condition(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]],Conditions.conditions[self.conditions[l]])
             
             MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
             print("Error " + str(l+1) + " completed\n\n\n")

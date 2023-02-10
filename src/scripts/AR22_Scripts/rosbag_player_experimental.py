@@ -43,7 +43,7 @@ class ProgressClock():
         
         
         
-class Play_Rosbag():
+class Run_Condition():
     def __init__(self):
         self.rate = rp.Rate(10.0) #10Hz
         self.infologs_pub = rp.Publisher('/infologs/end', Bool, queue_size=10)
@@ -79,10 +79,34 @@ class Play_Rosbag():
         print("\n\nshutting down\n\n")
         sys.exit(0)
 
-    def play_rosbag(self,rosbag_name,error):
-        rospkg.RosPack().get_path('video_logging') + '/bag_files'
+    def run_condition(self,rosbag_name,error,condition):
         # Signal Handler to kill subprocesses
         signal.signal(signal.SIGINT, self.signal_handler)
+
+        splitCondition = condition.split("+")
+        data_to_write = []
+        if splitCondition[1] == " live":
+            #Live
+            self.start_livestream(error)
+            data_to_write = self.record_data(error)
+            self.stop_livestream()
+        if splitCondition[1] == " replay":
+            #Replay
+            rosbag_player, clock = self.play_rosbag(rosbag_name)
+            data_to_write = self.record_data(error)
+            self.stop_rosbag(rosbag_player,clock)
+
+        return data_to_write
+
+    def start_livestream(self,error):
+        print("placeholder")
+
+    def stop_livestream(self):
+        print("placeholder")
+
+    def play_rosbag(self,rosbag_name):
+
+        rospkg.RosPack().get_path('video_logging') + '/bag_files'
         
         rosbag_name = rospkg.RosPack().get_path('video_logging') + '/bag_files/' + rosbag_name
 
@@ -95,14 +119,22 @@ class Play_Rosbag():
         # Start rosbag
         rosbag_player = pyrosbag.BagPlayer(rosbag_name)
         rosbag_player.play(loop=True, publish_clock=True, quiet=True)
+        return rosbag_player, clock
 
+    def stop_rosbag(self,rosbag_player,clock):
+        #Shut down rosbag
+        rosbag_player.stop()
+        clock.finishPlayback()
+
+
+    def record_data(self,error):
         #Start timer
         Timer.start = time()
         rp.sleep(1.)
         print("\nPress enter when participant provides their diagnosis")
         self.listenToKeypress = 1
         while self.pause == 1:
-            rp.sleep(0.1)
+            rp.sleep(0.01)
         #rp.spin()
         #Wait for participant to respond, then the operator presses enter
         current_time = time()
@@ -138,10 +170,6 @@ class Play_Rosbag():
         #Wait for participant to respond to follow up questions
         tcflush(sys.stdin, TCIFLUSH)
         response = input("\nPress enter when participant has responded to all follow up questions:  ")
-        
-        #Shut down rosbag
-        rosbag_player.stop()
-        clock.finishPlayback()
 
         #Return data
         data_to_write = [correct_error, errors_guessed, Timer.diagnoseTime]
