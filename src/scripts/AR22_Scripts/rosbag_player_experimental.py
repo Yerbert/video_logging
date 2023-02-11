@@ -49,7 +49,7 @@ class Run_Condition():
         self.rate = rp.Rate(10.0) #10Hz
         self.infologs_pub = rp.Publisher('/infologs/end', Bool, queue_size=10)
         self.tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
-        self.filter_pub = rp.Publisher("/filters", TFMessage, queue_size=10)
+        self.filter_pub = rp.Publisher("/filters", FilterSwitch, queue_size=10)
         self.pause = 1
         self.listenToKeypress = 0
         self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
@@ -146,7 +146,8 @@ class Run_Condition():
 
     def stop_rosbag(self,rosbag_player,clock):
         #Shut down rosbag
-        rosbag_player.stop()
+        rosbag_player.process.send_signal(signal.SIGINT)
+        rp.sleep(1.) # to allow process to end
         clock.finishPlayback()
 
 
