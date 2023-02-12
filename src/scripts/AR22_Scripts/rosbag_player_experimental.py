@@ -11,7 +11,7 @@ import subprocess
 import os
 import sys
 import signal
-from std_msgs.msg import Bool, Float32, String
+from std_msgs.msg import Bool, Float32, String, Empty
 from tf2_msgs.msg import TFMessage
 from time import sleep, time
 from rosgraph_msgs.msg import Clock
@@ -33,6 +33,7 @@ class ProgressClock():
         self.duration = self.end_time - self.start_time
         self.clock_sub = rp.Subscriber("/clock", Clock, self.callback)
         self.progress_pub = rp.Publisher("/progress", Float32, queue_size=10)
+        bag.close()
 
     def callback(self, msg):
         progress = ((msg.clock.secs + msg.clock.nsecs / 1e9) - self.start_time) / self.duration
@@ -47,7 +48,7 @@ class ProgressClock():
 class Run_Condition():
     def __init__(self):
         self.rate = rp.Rate(10.0) #10Hz
-        self.infologs_pub = rp.Publisher('/infologs/end', Bool, queue_size=10)
+        self.clear_scenario_pub = rp.Publisher('/clear_scenario', Empty, queue_size=10)
         self.tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
         self.filter_pub = rp.Publisher("/filters", FilterSwitch, queue_size=10)
         self.pause = 1
@@ -76,7 +77,7 @@ class Run_Condition():
 
     
     def signal_handler(self, sig, frame):
-        self.infologs_pub.publish(1)
+        self.clear_scenario_pub.publish()
         self.listener.stop()
         
         print("\n\nshutting down from rosbag_player_experimental\n\n")
@@ -100,6 +101,14 @@ class Run_Condition():
             rosbag_player, clock = self.play_rosbag(rosbag_name)
             data_to_write = self.record_data(error)
             self.stop_rosbag(rosbag_player,clock)
+        
+        # Re-Enable all live-condition filters
+        self.filter_pub.publish(FilterSwitch(
+            velodyne_blocked=True,
+            velodyne_flicker=True,
+            camera_flicker=True,
+            camera_blocked=True
+        ))
 
         return data_to_write
 
@@ -156,6 +165,7 @@ class Run_Condition():
         rosbag_player.stop()
         rp.sleep(1.) # to allow process to end
         clock.finishPlayback()
+        self.clear_scenario_pub.publish()
 
 
     def record_data(self,error):
