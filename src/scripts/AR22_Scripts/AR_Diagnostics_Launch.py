@@ -93,7 +93,7 @@ class AR_error_diagnostics:
         self.participant_no = int(participant_no)
         self.conditions = ["","","","","","","",""]
         self.errors = ["","","","","","","",""]
-        self.scenario_pub = rospy.Publisher("/scenario", String, queue_size=10)
+        self.condition_pub = rospy.Publisher("/condition", String, queue_size=10)
 
     def signal_handler(self, sig, frame):
         print("\n\nshutting down from AR_error_diagnostics\n\n")
@@ -168,7 +168,7 @@ class AR_error_diagnostics:
         sleep_seconds = 3
         print("\nSignalling devices to configure connections...")
         subprocess.run("sshpass -p clearpath ssh administrator@160.69.69.10 sleep 0.1 && rostopic pub -1 /test std_msgs/String \"{}\" && exit".format(new_condition), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        self.scenario_pub.publish(String(new_condition))
+        self.condition_pub.publish(String(new_condition))
         print("Sleeping for {} seconds to allow connections...".format(sleep_seconds))
         rospy.sleep(sleep_seconds) # to allow reconnections to occur
 
