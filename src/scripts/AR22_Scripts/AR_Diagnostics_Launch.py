@@ -167,7 +167,7 @@ class AR_error_diagnostics:
     def configure_device_connections(self, new_condition):
         sleep_seconds = 3
         print("\nSignalling devices to configure connections...")
-        subprocess.run("sshpass -p robinlee ssh administrator@160.69.69.10 sleep 0.1 && rostopic pub -1 /test std_msgs/String \"{}\" && exit".format(new_condition), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        subprocess.run("sshpass -p clearpath ssh administrator@160.69.69.10 sleep 0.1 && rostopic pub -1 /test std_msgs/String \"{}\" && exit".format(new_condition), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         self.scenario_pub.publish(String(new_condition))
         print("Sleeping for {} seconds to allow connections...".format(sleep_seconds))
         rospy.sleep(sleep_seconds) # to allow reconnections to occur
