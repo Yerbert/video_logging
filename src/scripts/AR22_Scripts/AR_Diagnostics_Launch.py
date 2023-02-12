@@ -2,6 +2,7 @@
 
 from fileinput import filename
 import rospy
+from std_msgs.msg import String
 import numpy as np
 import time
 from datetime import datetime
@@ -92,9 +93,10 @@ class AR_error_diagnostics:
         self.participant_no = int(participant_no)
         self.conditions = ["","","","","","","",""]
         self.errors = ["","","","","","","",""]
+        self.scenario_pub = rospy.Publisher("/scenario", String, queue_size=10)
 
     def signal_handler(self, sig, frame):
-        print("\n\nshutting down\n\n")
+        print("\n\nshutting down from AR_error_diagnostics\n\n")
         sys.exit(0)
 
     def all_loop(self):
@@ -148,7 +150,9 @@ class AR_error_diagnostics:
                 print("skipping error " + Errors.types[self.errors[l]] + "\n\n\n")
                 continue
 
-            wait = input("\nPrepare condition now, then press any key to begin streaming data   ")
+            self.configure_device_connections(Conditions.conditions[self.conditions[l]])
+
+            wait = input("\nPrepare condition now and ensure devices are connected.\nPress any key to begin streaming data   ")
             print("\n")
             #Once user has confirmed ready, switch to other file to start condition
             
@@ -159,6 +163,14 @@ class AR_error_diagnostics:
             MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
             print("Error " + str(l+1) + " completed\n\n\n")
         print("All error conditions complete, exiting...\n\n")
+    
+    def configure_device_connections(self, new_condition):
+        sleep_seconds = 3
+        print("\nSignalling devices to configure connections...")
+        subprocess.run("sshpass -p robinlee ssh administrator@160.69.69.10 sleep 0.1 && rostopic pub -1 /test std_msgs/String \"{}\" && exit".format(new_condition), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        self.scenario_pub.publish(String(new_condition))
+        print("Sleeping for {} seconds to allow connections...".format(sleep_seconds))
+        rospy.sleep(sleep_seconds) # to allow reconnections to occur
 
 if __name__ == '__main__':
     rospy.init_node('error_diagnostics_user_study')

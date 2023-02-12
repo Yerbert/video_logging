@@ -11,7 +11,7 @@ import subprocess
 import os
 import sys
 import signal
-from std_msgs.msg import Bool, Float32
+from std_msgs.msg import Bool, Float32, String
 from tf2_msgs.msg import TFMessage
 from time import sleep, time
 from rosgraph_msgs.msg import Clock
@@ -78,27 +78,32 @@ class Run_Condition():
     def signal_handler(self, sig, frame):
         self.infologs_pub.publish(1)
         self.listener.stop()
-        print("\n\nshutting down\n\n")
+        
+        print("\n\nshutting down from rosbag_player_experimental\n\n")
         sys.exit(0)
 
     def run_condition(self,rosbag_name,error,condition):
         # Signal Handler to kill subprocesses
         signal.signal(signal.SIGINT, self.signal_handler)
 
-        splitCondition = condition.split("+")
+        # self.set_device_connections(condition)
+        splitCondition = condition.split(" + ")
+
         data_to_write = []
-        if splitCondition[1] == " live":
+        if splitCondition[1] == "live":
             #Live
             self.start_livestream(error)
             data_to_write = self.record_data(error)
             self.stop_livestream()
-        if splitCondition[1] == " replay":
+        if splitCondition[1] == "replay":
             #Replay
             rosbag_player, clock = self.play_rosbag(rosbag_name)
             data_to_write = self.record_data(error)
             self.stop_rosbag(rosbag_player,clock)
 
         return data_to_write
+
+
 
     def start_livestream(self,error):
         print("placeholder")
@@ -147,6 +152,8 @@ class Run_Condition():
     def stop_rosbag(self,rosbag_player,clock):
         #Shut down rosbag
         rosbag_player.process.send_signal(signal.SIGINT)
+        rp.sleep(1.) # to allow process to end
+        rosbag_player.stop()
         rp.sleep(1.) # to allow process to end
         clock.finishPlayback()
 
