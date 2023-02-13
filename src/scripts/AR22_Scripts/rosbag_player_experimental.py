@@ -57,12 +57,7 @@ class Run_Condition():
 
 
     def publish_infologs(self, rosbag_name):
-<<<<<<< HEAD
         f = open(rospkg.RosPack().get_path('video_logging') + '/src/scripts/AR22_Scripts/infologs.json')
-=======
-        fname = rospkg.RosPack().get_path('video_logging') + '/src/scripts/AR22_Scripts/infologs.json'
-        f = open(fname)
->>>>>>> 088ec42ace204fe5fc0af0b49d569f04feb6e551
         data = json.load(f)
         messages = None
         for bag in data:
