@@ -8,8 +8,7 @@ from video_logging.msg import FilterSwitch
 class JackalSSH:
     def __init__(self):
         self.process = subprocess.Popen(
-            # "sshpass -p clearpath ssh -tt administrator@160.69.69.10\n",
-            "sshpass -p robinlee ssh -tt lachlan@lachlan-Lenovo-IdeaPad-L340-15IWL\n",
+            "sshpass -p clearpath ssh -tt administrator@160.69.69.10\n",
             shell=True,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
