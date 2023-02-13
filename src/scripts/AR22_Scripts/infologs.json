@@ -1,19 +1,6 @@
 [  
     {
-        "bag_name": "Bag_Files/HardwareDelocalisation.bag",
-        "infologs": [
-            {
-                "time": 1.02,
-                "text": "[ INFO ] Navigating to Goal A."
-            },
-            {
-                "time": 17.49,
-                "text": "[ INFO ] Successfully navigating to Goal A."
-            }
-        ]
-    },
-    {
-        "bag_name": "Bag_Files/DroppedPayload.bag",
+        "bag_name": "DroppedPayload.bag",
         "infologs": [
             {
                 "time": 0.99,
@@ -30,7 +17,7 @@
         ]
     },
     {
-        "bag_name": "Bag_Files/HumanObstruction.bag",
+        "bag_name": "HumanObstruction.bag",
         "infologs": [
             {
                 "time": 1.12,
@@ -51,7 +38,7 @@
         ]
     },
     {
-        "bag_name": "Bag_Files/SoftwareDelocalisation.bag",
+        "bag_name": "LocalisationError.bag",
         "infologs": [
             {
                 "time": 1.09,
@@ -72,7 +59,7 @@
         ]
     },
     {
-        "bag_name": "Bag_Files/MotorFailure.bag",
+        "bag_name": "MotorFailure.bag",
         "infologs": [
             {
                 "time": 0.87,
@@ -85,7 +72,7 @@
         ]
     },
     {
-        "bag_name": "Bag_Files/PoppedTyre.bag",
+        "bag_name": "FlatTyre.bag",
         "infologs": [
             {
                 "time": 0.88,
@@ -98,7 +85,7 @@
         ]
     },
     {
-        "bag_name": "Bag_Files/VelodyneFlicker.bag",
+        "bag_name": "VelodyneError.bag",
         "infologs": [
             {
                 "time": 1.00,
@@ -111,7 +98,7 @@
         ]
     },
     {
-        "bag_name": "Bag_Files/CameraFailure.bag",
+        "bag_name": "CameraFailure.bag",
         "infologs": [
             {
                 "time": 1.05,
