@@ -40,6 +40,7 @@ class JackalSSH:
     
     def kill(self, wait=4):
         # in most cases, publishing from cmd line "latches" 3 seconds
+        print("<killing SSH, waiting {} seconds...>".format(wait))
         rospy.sleep(wait)
         os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
         del self.process
