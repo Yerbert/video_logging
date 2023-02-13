@@ -94,16 +94,16 @@ class AR_error_diagnostics:
         self.conditions = ["","","","","","","",""]
         self.errors = ["","","","","","","",""]
         self.condition_pub = rospy.Publisher("/condition", String, queue_size=10)
-        self.jackalssh = subprocess.Popen("sshpass -p clearpath ssh -tt administrator@160.69.69.10\n", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        #self.jackalssh = subprocess.Popen("sshpass -p clearpath ssh -tt administrator@160.69.69.10\n", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     def signal_handler(self, sig, frame):
         print("\n\nshutting down from AR_error_diagnostics\n\n")
-        self.jackalssh.stdin("exit\n".encode())
-        self.jackalssh.stdin.flush()
-        self.jackalssh.stdin("exit\n".encode())
-        self.jackalssh.stdin.flush()
+        #self.jackalssh.stdin("exit\n".encode())
+        #self.jackalssh.stdin.flush()
+        #self.jackalssh.stdin("exit\n".encode())
+        #self.jackalssh.stdin.flush()
         rospy.sleep(.5)
-        output = self.jackalssh.communicate("exit\n".encode())
+        #output = self.jackalssh.communicate("exit\n".encode())
         sys.exit(0)
 
     def all_loop(self):
@@ -175,8 +175,8 @@ class AR_error_diagnostics:
         sleep_seconds = 6
         print("\nSignalling devices to configure connections...")
         
-        self.jackalssh.stdin.write('rostopic pub -1 /condition std_msgs/String "{}"\n'.format(new_condition).encode())
-        self.jackalssh.stdin.flush()
+        #self.jackalssh.stdin.write('rostopic pub -1 /condition std_msgs/String "{}"\n'.format(new_condition).encode())
+        #self.jackalssh.stdin.flush()
         
         self.condition_pub.publish(String(new_condition))
         print("Sleeping for {} seconds to allow connections...".format(sleep_seconds))

@@ -54,22 +54,10 @@ class Run_Condition():
         self.filter_pub = rp.Publisher("/filters", FilterSwitch, queue_size=10)
         self.infologs_pub = rp.Publisher("/infologs", String, queue_size=10)
         self.pause = 1
-        self.listenToKeypress = 0
-        self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
-        self.listener.start()  # Create an instance of Listener
 
-    def on_press(self, key):  # The function that's called when a key is pressed
-        if self.listenToKeypress == 1:
-            self.listenToKeypress = 0
-            if str(key) == "Key.enter":  # If enter was pressed, write a new line
-                self.pause = 0
-                self.listener.stop()
-
-    def on_release(self, key):  # The function that's called when a key is released
-        return
 
     def publish_infologs(self, rosbag_name):
-        f = open('infologs.json')
+        f = open(rospkg.RosPack().get_path('video_logging') + '/src/scripts/AR22_Scripts/infologs.json')
         data = json.load(f)
         messages = None
         for bag in data:
@@ -97,7 +85,6 @@ class Run_Condition():
     
     def signal_handler(self, sig, frame):
         self.clear_scenario_pub.publish()
-        self.listener.stop()
         
         print("\n\nshutting down from rosbag_player_experimental\n\n")
         sys.exit(0)
@@ -193,17 +180,14 @@ class Run_Condition():
         #Start timer
         Timer.start = time()
         rp.sleep(1.)
-        print("\nPress enter when participant provides their diagnosis")
-        self.listenToKeypress = 1
-        while self.pause == 1:
-            rp.sleep(0.01)
-        #rp.spin()
+        wait = input("\nPress enter when participant provides their diagnosis")
+
         #Wait for participant to respond, then the operator presses enter
         current_time = time()
         Timer.diagnoseTime = current_time - Timer.start
-        rp.sleep(0.2)
+
         print("Recorded Diagnosis time")
-        tcflush(sys.stdin, TCIFLUSH) # flush input stream
+
         #Did participant get the correct error/s?
         rp.sleep(0.5)
         correct_error = input("Did participant get the correct error/s? Y/N:  ")
