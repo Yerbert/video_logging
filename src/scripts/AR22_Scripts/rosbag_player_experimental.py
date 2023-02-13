@@ -57,12 +57,7 @@ class Run_Condition():
 
 
     def publish_infologs(self, rosbag_name):
-<<<<<<< HEAD
         f = open(rospkg.RosPack().get_path('video_logging') + '/src/scripts/AR22_Scripts/infologs.json')
-=======
-        fname = rospkg.RosPack().get_path('video_logging') + '/src/scripts/AR22_Scripts/infologs.json'
-        f = open(fname)
->>>>>>> 088ec42ace204fe5fc0af0b49d569f04feb6e551
         data = json.load(f)
         messages = None
         for bag in data:
@@ -105,12 +100,12 @@ class Run_Condition():
         if splitCondition[1] == "live":
             #Live
             self.start_livestream(error, rosbag_name)
-            data_to_write = self.record_data(error)
+            data_to_write = self.record_data(error,condition)
             self.stop_livestream()
         if splitCondition[1] == "replay":
             #Replay
             rosbag_player, clock = self.play_rosbag(rosbag_name)
-            data_to_write = self.record_data(error)
+            data_to_write = self.record_data(error,condition)
             self.stop_rosbag(rosbag_player,clock)
         
         # Re-Enable all live-condition filters
@@ -181,49 +176,59 @@ class Run_Condition():
         self.clear_scenario_pub.publish()
 
 
-    def record_data(self,error):
+    def record_data(self,error,condition):
         #Start timer
-        Timer.start = time()
-        rp.sleep(1.)
-        wait = input("\nPress enter when participant provides their diagnosis")
+        if error == "Training Scenario":
+            rp.sleep(1.)
+            splitCondition = condition.split(" + ")
+            if splitCondition[0] == "AR":
+                device = "Augmented Reality Headset"
+            else:
+                device = "Tablet"
+            input("\nProvide participant with instructions on how to use the " + device + " and then press enter     ")
+            data_to_write = ["training", "training", "training"]
+        else:
+            Timer.start = time()
+            rp.sleep(1.)
+            
+            wait = input("\nPress enter when participant provides their diagnosis")
+            
+            #Wait for participant to respond, then the operator presses enter
+            current_time = time()
+            Timer.diagnoseTime = current_time - Timer.start
 
-        #Wait for participant to respond, then the operator presses enter
-        current_time = time()
-        Timer.diagnoseTime = current_time - Timer.start
+            print("Recorded Diagnosis time")
 
-        print("Recorded Diagnosis time")
-
-        #Did participant get the correct error/s?
-        rp.sleep(0.5)
-        correct_error = input("Did participant get the correct error/s? Y/N:  ")
-        cont = 0
-        if correct_error == "Y" or correct_error == "N":
-            cont = 1
-        while cont == 0:
-            correct_error = input("Error. Invalid Input. Please enter Y or N:  ")
+            #Did participant get the correct error/s?
+            rp.sleep(0.5)
+            correct_error = input("Did participant get the correct error/s? Y/N:  ")
+            cont = 0
             if correct_error == "Y" or correct_error == "N":
                 cont = 1
-        if correct_error == "N":
-            errors_guessed = input("Which errors did the participant guess?  ")
-        else:
-            errors_guessed = error
+            while cont == 0:
+                correct_error = input("Error. Invalid Input. Please enter Y or N:  ")
+                if correct_error == "Y" or correct_error == "N":
+                    cont = 1
+            if correct_error == "N":
+                errors_guessed = input("Which errors did the participant guess?  ")
+            else:
+                errors_guessed = error
 
-        #Wait for participant to respond to second question
-        #response = input("Press enter when participant has told you their confidence ")
-        #current_time = time()
-        #Timer.ConfidencePercentageResponseTime = current_time - Timer.start
-        
-        #Wait for participant to respond to third question
-        #response = input("Press enter when participant has told you their reasoning for confidence ")
-        #current_time = time()
-        #Timer.ConfidenceExplanationTime = current_time - Timer.start
+            #Wait for participant to respond to second question
+            #response = input("Press enter when participant has told you their confidence ")
+            #current_time = time()
+            #Timer.ConfidencePercentageResponseTime = current_time - Timer.start
+            
+            #Wait for participant to respond to third question
+            #response = input("Press enter when participant has told you their reasoning for confidence ")
+            #current_time = time()
+            #Timer.ConfidenceExplanationTime = current_time - Timer.start
 
-        #Wait for participant to respond to follow up questions
-        tcflush(sys.stdin, TCIFLUSH)
-        response = input("\nPress enter when participant has responded to all follow up questions:  ")
+            #Wait for participant to respond to follow up questions
+            response = input("\nPress enter when participant has responded to all follow up questions:  ")
 
-        #Return data
-        data_to_write = [correct_error, errors_guessed, Timer.diagnoseTime]
+            #Return data
+            data_to_write = [correct_error, errors_guessed, Timer.diagnoseTime]
         return data_to_write
 
     
