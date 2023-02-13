@@ -36,7 +36,8 @@ class Errors:
                         "E": "Obstacle in the Way",
                         "F": "Robot Senses Non-existent Object",
                         "G": "Dropped Payload",
-                        "H": "Localisation Error"
+                        "H": "Velodyne LIDAR Failure and Localisation Error",
+                        "T": "Training Scenario"
     }
     rosbags = {
                         "A": "FlatTyre.bag",
@@ -46,7 +47,8 @@ class Errors:
                         "E": "HumanObstruction.bag",
                         "F": "HumanObstruction.bag",
                         "G": "DroppedPayload.bag",
-                        "H": "LocalisationError.bag"
+                        "H": "LocalisationError.bag",
+                        "T": "TrainingRecording.bag"
                         }
 
 class Conditions:
@@ -87,23 +89,33 @@ class MyWorkbook:
         self.wb.save(self.fullpath)
 
 
+class JackalSSH:
+    def __init__(self):
+        self.jackalssh = subprocess.Popen("sshpass -p clearpath ssh -tt administrator@160.69.69.10\n", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    
+    def send_msg(self, msg):
+        self.jackalssh.stdin.write((msg+"\n").encode())
+        self.jackalssh.stdin.flush()
+    
+    def exit(self):
+        self.send_msg("exit")
+        rospy.sleep(.5)
+        self.send_msg("exit")
+
 
 class AR_error_diagnostics:
     def __init__(self, participant_no):
         self.participant_no = int(participant_no)
-        self.conditions = ["","","","","","","",""]
-        self.errors = ["","","","","","","",""]
+        self.conditions = ["","","","","","","","","",""]
+        self.errors = ["","","","","","","","","",""]
         self.condition_pub = rospy.Publisher("/condition", String, queue_size=10)
-        self.jackalssh = subprocess.Popen("sshpass -p clearpath ssh -tt administrator@160.69.69.10\n", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # self.jackalssh = subprocess.Popen("sshpass -p clearpath ssh -tt administrator@160.69.69.10\n", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        self.jackalssh = JackalSSH()
 
     def signal_handler(self, sig, frame):
         print("\n\nshutting down from AR_error_diagnostics\n\n")
-        self.jackalssh.stdin("exit\n".encode())
-        self.jackalssh.stdin.flush()
-        self.jackalssh.stdin("exit\n".encode())
-        self.jackalssh.stdin.flush()
+        self.jackalssh.exit()
         rospy.sleep(.5)
-        output = self.jackalssh.communicate("exit\n".encode())
         sys.exit(0)
 
     def all_loop(self):
@@ -124,7 +136,7 @@ class AR_error_diagnostics:
                 participant_row = i
         
         #Find order of conditions for current participant
-        j = 0
+        j = 2
         for i in range(2,6):
             condition = int(pol_sheet.cell(row = participant_row, column = i).value)
             self.conditions[j] = str(condition)
@@ -134,11 +146,19 @@ class AR_error_diagnostics:
 
 
         #Find order of errors for current participant
-        for i in range(0,8):
+        for i in range(2,10):
             col = i+6
             self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
         
+        #Add static training scenarios to lists
+        self.errors[0] = "T"
+        self.errors[1] = "T"
+        self.conditions[0] = "1"
+        self.conditions[1] = "3"
         workbook = MyWorkbook()
+
+        input("Run through first page of instructions if not already done. Press enter to continue once completed    ")
+
         #Go through each error
         for l, error in enumerate(self.errors):
             #Print error information here
@@ -167,16 +187,22 @@ class AR_error_diagnostics:
             play_condition = rosbag_player_experimental.Run_Condition()
             data_to_write = play_condition.run_condition(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]],Conditions.conditions[self.conditions[l]])
             
-            MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
-            print("Error " + str(l+1) + " completed\n\n\n")
+            if l == 1:
+                input("Provide instructions on difference between live and replay and then press enter    ")
+                print("\n\nTraining complete. About to move onto study.... \n\n")
+            if l > 1:
+                MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
+                print("Error " + str(l+1) + " completed\n\n\n")
         print("All error conditions complete, exiting...\n\n")
     
     def configure_device_connections(self, new_condition):
         sleep_seconds = 6
         print("\nSignalling devices to configure connections...")
         
-        self.jackalssh.stdin.write('rostopic pub -1 /condition std_msgs/String "{}"\n'.format(new_condition).encode())
-        self.jackalssh.stdin.flush()
+        # self.jackalssh.stdin.write('rostopic pub -1 /condition std_msgs/String "{}"\n'.format(new_condition).encode())
+        # self.jackalssh.stdin.flush()
+        self.jackalssh.send_msg('rostopic pub -1 /condition std_msgs/String "{}"'.format(new_condition))
+        
         
         self.condition_pub.publish(String(new_condition))
         print("Sleeping for {} seconds to allow connections...".format(sleep_seconds))
