@@ -185,10 +185,9 @@ class AR_error_diagnostics:
         sleep_seconds = 6
         print("\nSignalling devices to configure connections...")
         
-        JackalSSH().ros_pub_condition(new_condition).kill()
-        
         self.condition_pub.publish(String(new_condition))
-        print("Sleeping for {} seconds to allow connections...".format(sleep_seconds))
+        JackalSSH().ros_pub_condition(new_condition).kill()
+        print("Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
         rospy.sleep(sleep_seconds) # to allow reconnections to occur
 
 if __name__ == '__main__':

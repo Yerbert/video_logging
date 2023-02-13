@@ -8,7 +8,8 @@ from video_logging.msg import FilterSwitch
 class JackalSSH:
     def __init__(self):
         self.process = subprocess.Popen(
-            "sshpass -p clearpath ssh -tt administrator@160.69.69.10\n",
+            # "sshpass -p clearpath ssh -tt administrator@160.69.69.10\n",
+            "sshpass -p robinlee ssh -tt lachlan@lachlan-Lenovo-IdeaPad-L340-15IWL\n",
             shell=True,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -38,6 +39,8 @@ class JackalSSH:
         self.ros_pub("/condition", "std_msgs/String", condition)
         return self
     
-    def kill(self):
+    def kill(self, wait=4):
+        # in most cases, publishing from cmd line "latches" 3 seconds
+        rospy.sleep(wait)
         os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
         del self.process
