@@ -130,28 +130,32 @@ class Run_Condition():
 
     def start_livestream(self,error,rosbag_name):
 
-        print("Setting filters and sending infologs")
-        self.set_error_filters(error)
-        JackalSSH().send_cmd('python live_infologs_publisher.py ' + rosbag_name).kill()
-
-        # Localise Jackal to origin
-        wait_seconds = 5
-        print("Localising Jackal to map origin. Allowing {} seconds to complete...".format(wait_seconds))
-        jackalssh = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
-        rp.sleep(wait_seconds)
-        jackalssh.kill()
-
-    def set_error_filters(self, error):
-
+        # Set filters
+        print("Setting filters...")
         filters = FilterSwitch(
             velodyne_flicker = error in ["Velodyne LIDAR Failure"],
             velodyne_blocked = error in [],
             camera_flicker   = error in [],
             camera_blocked   = error in ["Camera Sensor Failure"]
         )
-
         self.filter_pub.publish(filters)
-        JackalSSH().ros_pub_filterswitch(filters).kill()
+        j1 = JackalSSH().ros_pub_filterswitch(filters)
+        
+        print("Sending infologs...")
+        j2 = JackalSSH().send_cmd('python live_infologs_publisher.py ' + rosbag_name)
+
+        # Localise Jackal to origin
+        wait_seconds = 5
+        print("Localising Jackal to map origin...")
+        j3 = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
+        print("Allowing {} seconds...".format(wait_seconds))
+        rp.sleep(wait_seconds)
+        
+        # Kill ssh's
+        j1.kill(0)
+        j2.kill(0)
+        j3.kill(0)
+        
 
     def stop_livestream(self):
         print("placeholder")
