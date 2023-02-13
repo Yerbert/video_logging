@@ -131,7 +131,7 @@ class Run_Condition():
         print("placeholder")
 
         velodyne_flicker = error in ["Velodyne LIDAR Failure"]
-        velodyne_blocked = error in []
+        velodyne_blocked = error in ["Velodyne LIDAR Failure and Localisation Error"]
         camera_flicker   = error in []
         camera_blocked   = error in ["Camera Sensor Failure"]
         filters = FilterSwitch(
@@ -147,6 +147,7 @@ class Run_Condition():
 
     def stop_livestream(self):
         print("placeholder")
+        self.clear_scenario_pub.publish()
 
     def play_rosbag(self,rosbag_name):
 

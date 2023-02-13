@@ -20,20 +20,20 @@ class InfoLogsPublisher:
         messages = None
         for bag in data:
             if(self.bag_name.endswith(bag["bag_name"])):
-                f.close()
                 messages = bag["infologs"]
+                f.close()
                 break
         if(messages == None):
             print("[ERROR] Infologs for this bag are undefined in infologs.json file!")
             f.close()
             sys.exit(0)
         for i in range(len(messages)):
+            rp.sleep(0.1) 
             msg = "[ Timestamp: {:.2f} secs ]\n".format(messages[i]["time"]) + messages[i]["text"]
             self.pub.publish(String(msg))
-            rp.sleep(0.1) 
+            
 
 if __name__ == '__main__':
     rp.init_node('live_infologs')
     infologs = InfoLogsPublisher(rosbag_name = sys.argv[1])
-    rp.sleep(5)
     sys.exit(0)
