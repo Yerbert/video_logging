@@ -11,6 +11,7 @@ import subprocess
 import os
 import sys
 import signal
+import json
 from std_msgs.msg import Bool, Float32, String, Empty
 from tf2_msgs.msg import TFMessage
 from time import sleep, time
@@ -51,6 +52,7 @@ class Run_Condition():
         self.clear_scenario_pub = rp.Publisher('/clear_scenario', Empty, queue_size=10)
         self.tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
         self.filter_pub = rp.Publisher("/filters", FilterSwitch, queue_size=10)
+        self.infologs_pub = rp.Publisher("/infologs", String, queue_size=10)
         self.pause = 1
         self.listenToKeypress = 0
         self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
@@ -66,6 +68,23 @@ class Run_Condition():
     def on_release(self, key):  # The function that's called when a key is released
         return
 
+    def publish_infologs(self, rosbag_name):
+        f = open('infologs.json')
+        data = json.load(f)
+        messages = None
+        for bag in data:
+            if(rosbag_name.endswith(bag["bag_name"])):
+                f.close()
+                messages = bag["infologs"]
+                break
+        if(messages == None):
+            print("[ERROR] Infologs for this bag are undefined in infologs.json file!")
+            f.close()
+            sys.exit(0)
+        for i in range(len(messages)):
+            msg = "[ Timestamp: {:.2f} secs ]\n".format(messages[i]["time"]) + messages[i]["text"]
+            self.infologs_pub.publish(String(msg))
+        
     def publish_tfs(self, rosbag_name):
 
         tf_path = []
@@ -93,7 +112,7 @@ class Run_Condition():
         data_to_write = []
         if splitCondition[1] == "live":
             #Live
-            self.start_livestream(error)
+            self.start_livestream(error, rosbag_name)
             data_to_write = self.record_data(error)
             self.stop_livestream()
         if splitCondition[1] == "replay":
@@ -114,7 +133,7 @@ class Run_Condition():
 
 
 
-    def start_livestream(self,error):
+    def start_livestream(self,error,rosbag_name):
         print("placeholder")
 
         velodyne_flicker = error in ["Velodyne LIDAR Failure"]
@@ -128,6 +147,8 @@ class Run_Condition():
             camera_blocked=camera_blocked
         )
         self.filter_pub.publish(filters)
+        self.publish_infologs(rosbag_name)
+
 
 
     def stop_livestream(self):

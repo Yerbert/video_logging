@@ -25,7 +25,7 @@ def load_messages(bag_name):
     f = open('infologs.json')
     data = json.load(f)
     for bag in data:
-        if(bag["bag_name"] == bag_name):
+        if(bag_name.endswith(bag["bag_name"])):
             f.close()
             return bag["infologs"]
     print("[ERROR] Infologs for this bag are undefined in infologs.json file!")
