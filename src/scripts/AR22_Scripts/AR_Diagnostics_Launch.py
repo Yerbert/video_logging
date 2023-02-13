@@ -177,7 +177,7 @@ class AR_error_diagnostics:
                 print("skipping error " + Errors.types[self.errors[l]] + "\n\n\n")
                 continue
 
-            self.configure_device_connections(Conditions.conditions[self.conditions[l]])
+            self.configure_device_connections(Conditions.conditions[self.conditions[l]], Errors.rosbags[self.errors[l]])
 
             wait = input("\nPrepare condition now and ensure devices are connected.\nPress any key to begin streaming data   ")
             print("\n")
@@ -195,13 +195,14 @@ class AR_error_diagnostics:
                 print("Error " + str(l+1) + " completed\n\n\n")
         print("All error conditions complete, exiting...\n\n")
     
-    def configure_device_connections(self, new_condition):
+    def configure_device_connections(self, new_condition, rosbag_name):
         sleep_seconds = 6
         print("\nSignalling devices to configure connections...")
         
         # self.jackalssh.stdin.write('rostopic pub -1 /condition std_msgs/String "{}"\n'.format(new_condition).encode())
         # self.jackalssh.stdin.flush()
         self.jackalssh.send_msg('rostopic pub -1 /condition std_msgs/String "{}"'.format(new_condition))
+        self.jackalssh.send_msg('python live_infologs_publisher.py ' + rosbag_name)
         
         
         self.condition_pub.publish(String(new_condition))
