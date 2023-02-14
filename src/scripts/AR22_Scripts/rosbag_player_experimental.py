@@ -116,13 +116,17 @@ class Run_Condition():
             data_to_write = self.record_data(error,condition)
             self.stop_rosbag(rosbag_player,clock)
         
-        # Re-block all live filters data
+        # Block all data
         filters = FilterSwitch(
             velodyne_blocked=True,
             camera_blocked=True
         )
         self.filter_pub.publish(filters)
         JackalSSH().ros_pub_filterswitch(filters).kill()
+
+        # Clear scenario
+        self.clear_scenario_pub.publish()
+        JackalSSH().ros_pub("/clear_scenario", "std_msgs/Empty", {}).kill()
 
         return data_to_write
 
@@ -131,6 +135,7 @@ class Run_Condition():
     def start_livestream(self,error,rosbag_name):
 
         # Set filters
+        # Uses 3 JackalSSH's so that they are all done in parallel
         print("Setting filters...")
         filters = FilterSwitch(
             velodyne_flicker = error in ["Velodyne LIDAR Failure"],
@@ -145,9 +150,10 @@ class Run_Condition():
         j2 = JackalSSH().send_cmd('python live_infologs_publisher.py ' + rosbag_name)
 
         # Localise Jackal to origin
-        wait_seconds = 5
         print("Localising Jackal to map origin...")
         j3 = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
+        
+        wait_seconds = 5
         print("Allowing {} seconds...".format(wait_seconds))
         rp.sleep(wait_seconds)
         
@@ -167,7 +173,7 @@ class Run_Condition():
         
         rosbag_name = rospkg.RosPack().get_path('video_logging') + '/bag_files/' + rosbag_name
 
-        # Disable all live-condition filters
+        # Disable all filters for replay (laptop only)
         self.filter_pub.publish(FilterSwitch(
             velodyne_blocked=False,
             velodyne_flicker=False,
@@ -193,8 +199,6 @@ class Run_Condition():
         rosbag_player.stop()
         rp.sleep(1.) # to allow process to end
         clock.finishPlayback()
-        self.clear_scenario_pub.publish()
-
 
     def record_data(self,error,condition):
         #Start timer
