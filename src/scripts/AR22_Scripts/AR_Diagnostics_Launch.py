@@ -27,6 +27,19 @@ from openpyxl import load_workbook, Workbook
 import rosbag_player_experimental
 from JackalSSH import JackalSSH
 
+# For printing formatting
+class Color:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
+
 class Errors:
     name = None
     types = {
@@ -51,6 +64,18 @@ class Errors:
                         "H": "LocalisationError.bag",
                         "T": "TrainingRecording.bag"
                         }
+    jackal_locations = {
+                        "A"     : "Point A (near desk)",
+                        "B"     : "Point C (middle)",
+                        "C"     : "Point A (near desk)",
+                        "D"     : "Point A (near desk)",
+                        "E"     : "Point A (near desk), slightly towards gap in barriers",
+                        "F"     : "Point A (near desk), slightly towards gap in barriers",
+                        "G"     : "Point A (near desk)",
+                        "H"     : "Point A (near desk)",
+                        "T"     : "Point A (near desk)",
+                        "live"  : "Point B (map origin)",
+    }
 
 class Conditions:
     name = None
@@ -146,9 +171,9 @@ class AR_error_diagnostics:
         #Go through each error
         for l, error in enumerate(self.errors):
             #Print error information here
-            print("\nThe error will be " + Errors.types[self.errors[l]])
+            print("\nThe error will be " + Color.BOLD + Color.CYAN + Errors.types[self.errors[l]] + Color.END)
             #Print condition for operator to know which method is being used
-            print("The condition required for this error is " + Conditions.conditions[self.conditions[l]])
+            print("The condition required for this error is " + Color.BOLD + Color.CYAN + Conditions.conditions[self.conditions[l]] + Color.END)
             cont = input("Do you want to perform this Error/condition? (Y/N)  ")
             check = 0
             if cont == "Y" or cont == "N":
@@ -163,7 +188,7 @@ class AR_error_diagnostics:
 
             self.configure_device_connections(Conditions.conditions[self.conditions[l]], Errors.rosbags[self.errors[l]])
 
-            wait = input("\nPrepare condition now and ensure devices are connected.\nPress any key to begin streaming data   ")
+            wait = input("\nEnsure the Jackal is located at: " + Color.BOLD + Color.YELLOW + Errors.jackal_locations[self.errors[l]] + Color.END + "\nPrepare condition now and ensure devices are connected.\nPress any key to begin streaming data   ")
             print("\n")
             #Once user has confirmed ready, switch to other file to start condition
             
@@ -183,11 +208,11 @@ class AR_error_diagnostics:
     def configure_device_connections(self, new_condition, rosbag_name):
 
         sleep_seconds = 6
-        print("\nSignalling devices to configure connections...")
+        print("\n  Signalling devices to configure connections...")
         
         self.condition_pub.publish(String(new_condition))
         JackalSSH().ros_pub_condition(new_condition).kill()
-        print("Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
+        print("  Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
         rospy.sleep(sleep_seconds) # to allow reconnections to occur
 
 if __name__ == '__main__':
