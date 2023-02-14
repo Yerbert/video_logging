@@ -25,6 +25,7 @@ from geometry_msgs.msg import Point, Vector3, WrenchStamped, PoseStamped
 from openpyxl import load_workbook, Workbook
 
 import rosbag_player_experimental
+from JackalSSH import JackalSSH
 
 class Errors:
     name = None
@@ -89,32 +90,15 @@ class MyWorkbook:
         self.wb.save(self.fullpath)
 
 
-class JackalSSH:
-    def __init__(self):
-        self.jackalssh = subprocess.Popen("sshpass -p clearpath ssh -tt administrator@160.69.69.10\n", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    
-    def send_msg(self, msg):
-        self.jackalssh.stdin.write((msg+"\n").encode())
-        self.jackalssh.stdin.flush()
-    
-    def exit(self):
-        self.send_msg("exit")
-        rospy.sleep(.5)
-        self.send_msg("exit")
-
-
 class AR_error_diagnostics:
     def __init__(self, participant_no):
         self.participant_no = int(participant_no)
         self.conditions = ["","","","","","","","","",""]
         self.errors = ["","","","","","","","","",""]
         self.condition_pub = rospy.Publisher("/condition", String, queue_size=10)
-        # self.jackalssh = subprocess.Popen("sshpass -p clearpath ssh -tt administrator@160.69.69.10\n", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        self.jackalssh = JackalSSH()
 
     def signal_handler(self, sig, frame):
         print("\n\nshutting down from AR_error_diagnostics\n\n")
-        self.jackalssh.exit()
         rospy.sleep(.5)
         sys.exit(0)
 
@@ -195,18 +179,15 @@ class AR_error_diagnostics:
                 print("Error " + str(l+1) + " completed\n\n\n")
         print("All error conditions complete, exiting...\n\n")
     
+
     def configure_device_connections(self, new_condition, rosbag_name):
+
         sleep_seconds = 6
         print("\nSignalling devices to configure connections...")
         
-        # self.jackalssh.stdin.write('rostopic pub -1 /condition std_msgs/String "{}"\n'.format(new_condition).encode())
-        # self.jackalssh.stdin.flush()
-        self.jackalssh.send_msg('rostopic pub -1 /condition std_msgs/String "{}"'.format(new_condition))
-        self.jackalssh.send_msg('python live_infologs_publisher.py ' + rosbag_name)
-        
-        
         self.condition_pub.publish(String(new_condition))
-        print("Sleeping for {} seconds to allow connections...".format(sleep_seconds))
+        JackalSSH().ros_pub_condition(new_condition).kill()
+        print("Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
         rospy.sleep(sleep_seconds) # to allow reconnections to occur
 
 if __name__ == '__main__':

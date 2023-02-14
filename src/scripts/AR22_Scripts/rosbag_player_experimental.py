@@ -17,6 +17,7 @@ from time import sleep, time
 from rosgraph_msgs.msg import Clock
 from termios import tcflush, TCIFLUSH
 from video_logging.msg import FilterSwitch
+from JackalSSH import JackalSSH
 
 class Timer:
     start = 0
@@ -115,35 +116,46 @@ class Run_Condition():
             data_to_write = self.record_data(error,condition)
             self.stop_rosbag(rosbag_player,clock)
         
-        # Re-Enable all live-condition filters
-        self.filter_pub.publish(FilterSwitch(
+        # Re-block all live filters data
+        filters = FilterSwitch(
             velodyne_blocked=True,
-            velodyne_flicker=True,
-            camera_flicker=True,
             camera_blocked=True
-        ))
+        )
+        self.filter_pub.publish(filters)
+        JackalSSH().ros_pub_filterswitch(filters).kill()
 
         return data_to_write
 
 
 
     def start_livestream(self,error,rosbag_name):
-        print("placeholder")
 
-        velodyne_flicker = error in ["Velodyne LIDAR Failure"]
-        velodyne_blocked = error in ["Velodyne LIDAR Failure and Localisation Error"]
-        camera_flicker   = error in []
-        camera_blocked   = error in ["Camera Sensor Failure"]
+        # Set filters
+        print("Setting filters...")
         filters = FilterSwitch(
-            velodyne_flicker=velodyne_flicker,
-            velodyne_blocked=velodyne_blocked,
-            camera_flicker=camera_flicker,
-            camera_blocked=camera_blocked
+            velodyne_flicker = error in ["Velodyne LIDAR Failure"],
+            velodyne_blocked = error in [],
+            camera_flicker   = error in [],
+            camera_blocked   = error in ["Camera Sensor Failure"]
         )
         self.filter_pub.publish(filters)
-    
+        j1 = JackalSSH().ros_pub_filterswitch(filters)
+        
+        print("Sending infologs...")
+        j2 = JackalSSH().send_cmd('python live_infologs_publisher.py ' + rosbag_name)
 
-
+        # Localise Jackal to origin
+        wait_seconds = 5
+        print("Localising Jackal to map origin...")
+        j3 = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
+        print("Allowing {} seconds...".format(wait_seconds))
+        rp.sleep(wait_seconds)
+        
+        # Kill ssh's
+        j1.kill(0)
+        j2.kill(0)
+        j3.kill(0)
+        
 
     def stop_livestream(self):
         print("placeholder")

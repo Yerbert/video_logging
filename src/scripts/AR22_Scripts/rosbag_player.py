@@ -40,7 +40,7 @@ def publish_tfs(rosbag_name):
     tf_pub.publish(TFMessage(tf_path))
 
 def signal_handler(sig, frame):
-    os.system("rostopic pub -1 /infologs/end std_msgs/Bool true")
+    os.system("rostopic pub -1 /clear_scenario std_msgs/Empty")
     if (tcp):
         os.killpg(os.getpgid(p.pid), signal.SIGTERM)
     sys.exit(0)
