@@ -70,7 +70,7 @@ class Errors:
                         "A"     : "Point A (near desk)",
                         "B"     : "Point C (middle)",
                         "C"     : "Point A (near desk)",
-                        "D"     : "Point A (near desk)",
+                        "D"     : "Point C (middle)",
                         "E"     : "Point A (near desk), slightly towards gap in barriers",
                         "F"     : "Point A (near desk), slightly towards gap in barriers",
                         "G"     : "Point A (near desk)",

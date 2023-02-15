@@ -116,6 +116,7 @@ class Run_Condition():
             data_to_write = self.record_data(error,condition)
             self.stop_rosbag(rosbag_player,clock)
         
+        print("  Blocking data stream (enabling filters)...")
         # Block all data
         filters = FilterSwitch(
             velodyne_blocked=True,
@@ -124,6 +125,7 @@ class Run_Condition():
         self.filter_pub.publish(filters)
         JackalSSH().ros_pub_filterswitch(filters).kill()
 
+        print("  Clearing scenario...")
         # Clear scenario
         self.clear_scenario_pub.publish()
         JackalSSH().ros_pub("/clear_scenario", "std_msgs/Empty", {}).kill()
@@ -140,7 +142,7 @@ class Run_Condition():
         print("  Setting filters...")
         filters = FilterSwitch(
             velodyne_flicker = error in ["Velodyne LIDAR Failure"],
-            velodyne_blocked = error in [],
+            velodyne_blocked = error in ["Velodyne LIDAR Failure and Localisation Error"],
             camera_flicker   = error in [],
             camera_blocked   = error in ["Camera Sensor Failure"]
         )
@@ -148,7 +150,7 @@ class Run_Condition():
         j1 = JackalSSH().ros_pub_filterswitch(filters)
         
         print("  Sending infologs...")
-        j2 = JackalSSH().send_cmd('python live_infologs_publisher.py ' + rosbag_name)
+        j2 = JackalSSH().send_cmd('python /home/administrator/catkin_ws/src/process_messages/src/live_infologs_publisher.py ' + rosbag_name)
 
         # Localise Jackal to origin
         print("  Localising Jackal to map origin...")

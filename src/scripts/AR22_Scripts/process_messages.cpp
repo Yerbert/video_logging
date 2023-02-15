@@ -5,6 +5,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/CompressedImage.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Bool.h>
 #include <video_logging/FilterSwitch.h>
 
 #include <iostream>
@@ -95,6 +96,7 @@ StutterFilter camera_flicker(1);
 BlockFilter camera_blocked;
 StutterFilter velodyne_flicker(1);
 BlockFilter velodyne_blocked;
+bool non_existent_object = true;
 
 bool is_acceptable_point(const pcl::PointXYZ& point)
 {
@@ -177,6 +179,20 @@ void filter_callback(const video_logging::FilterSwitch::ConstPtr& filter_msg) {
 	velodyne_flicker.enabled = filter_msg->velodyne_flicker;
 	camera_blocked.enabled = filter_msg->camera_blocked;
 	camera_flicker.enabled = filter_msg->camera_flicker;
+	// non_existent_object = filter_msg->camera_flicker;
+}
+
+pcl::PointXYZ create_fake_point() {
+	float centre_x = 0;
+	float centre_y = 1;
+	float centre_z = 0;
+	float numPoints = 100;
+
+	float x = centre_x + ( ( ((float)(std::rand() % 200)) - 100) / 300);
+	float y = centre_y + ( ( ((float)(std::rand() % 200)) - 100) / 300);
+	float z = centre_z + ( ( ((float)(std::rand() % 200)) - 100) / 300);
+	pcl::PointXYZ new_point(x,y,z);
+	return new_point;
 }
 
 
@@ -208,6 +224,12 @@ void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 		}
 	}
 
+	if (non_existent_object) {
+		for(int i=0; i<100; i++) {
+			new_cloud.points.push_back(create_fake_point());
+		}
+	}
+
 	sensor_msgs::PointCloud2 new_cloud_msg;
 	pcl::toROSMsg(new_cloud, new_cloud_msg);
 	pointcloud_pub.publish(new_cloud_msg);
@@ -236,6 +258,13 @@ void tf_callback(const tf2_msgs::TFMessageConstPtr& msg)
 	}
 }
 
+void fakeobj_callback(const std_msgs::BoolConstPtr& msg)
+{
+	non_existent_object = msg->data;
+}
+
+
+
 int main(int argc, char** argv)
 {
 
@@ -248,27 +277,32 @@ int main(int argc, char** argv)
 	std::string video_intopic = "/camera/color/image_raw/compressed";
 	std::string video_outtopic = "/camera/color/image_raw/compressed/processed";
 
-	// std::string tf_intopic = "/tf";
-	// std::string tf_outtopic = "/tf/flattened";
-
 	std::string tf_intopic = "/tf";
 	std::string tf_outtopic = "/tf";
 
 	std::string filter_intopic = "/filters";
+	std::string fakeobj_intopic = "/fake_object";
 
+	// Point cloud
 	pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>(pointcloud_outtopic, 1);
 	ros::Subscriber pointcloud_sub = nh.subscribe(pointcloud_intopic, 1, pointcloud_callback);
 	std::cout << "Republishing point clouds from \n  " << pointcloud_intopic << "\nto\n  " << pointcloud_outtopic << "\n";
 
+	// Video
 	video_pub = nh.advertise<sensor_msgs::CompressedImage>(video_outtopic, 1);
 	ros::Subscriber video_sub = nh.subscribe(video_intopic, 1, video_callback);
 	std::cout << "Republishing video from \n  " << video_intopic << "\nto\n  " << video_outtopic << "\n";
 
+	// TF
 	tf_pub = nh.advertise<tf2_msgs::TFMessage>(tf_outtopic, 1);
 	ros::Subscriber tf_sub = nh.subscribe(tf_intopic, 1, tf_callback);
 	std::cout << "Republishing tf from \n  " << tf_intopic << "\nto\n  " << tf_outtopic << "\n";
 
+	// Filters
 	ros::Subscriber filter_sub = nh.subscribe(filter_intopic, 1, filter_callback);
+
+	// Fake object
+	ros::Subscriber fakeobj_sub = nh.subscribe(fakeobj_intopic, 1, fakeobj_callback);
 
 	ros::spin();
 
