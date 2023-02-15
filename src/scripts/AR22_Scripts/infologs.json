@@ -38,6 +38,27 @@
         ]
     },
     {
+        "bag_name": "FakeObstruction.bag",
+        "infologs": [
+            {
+                "time": 1.12,
+                "text": "[ INFO ] Navigating to Goal A."
+            },
+            {
+                "time": 11.01,
+                "text": "[ WARN ] Obstruction in front of robot, rerouting path."
+            },
+            {
+                "time": 12.00,
+                "text": "[ ERROR ]  Rerouting failed."
+            },
+            {
+                "time": 14.20,
+                "text": "[ ERROR ] Failed to navigate to Goal B."
+            }
+        ]
+    },
+    {
         "bag_name": "LocalisationError.bag",
         "infologs": [
             {

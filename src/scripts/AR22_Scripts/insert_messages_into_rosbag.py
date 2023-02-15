@@ -15,6 +15,15 @@ def insert_infologs(bag_name, new_bag_name, messages):
         bag.write("/infologs/activate", Int8(i), rostime.Time.from_seconds(start_time + messages[i]["time"]))
     bag.close()
 
+def insert_fake_object_signal(new_bag_name):
+    bag = rosbag.Bag(new_bag_name, 'a')
+    start_time = bag.get_start_time()
+    end_time = bag.get_end_time()
+    bag.write("/fake_object", Bool(False), rostime.Time.from_seconds(start_time + 0.15))
+    bag.write("/fake_object", Bool(True), rostime.Time.from_seconds(start_time + 10.50))
+    bag.write("/fake_object", Bool(False), rostime.Time.from_seconds(end_time))
+    bag.close()
+
 def insert_start_message(bag_name):
     bag = rosbag.Bag(bag_name, 'a')
     start_time = bag.get_start_time()
@@ -40,6 +49,9 @@ if __name__ == "__main__":
     shutil.copyfile(bag_name, new_bag_name)
     insert_infologs(bag_name, new_bag_name, messages)
     insert_start_message(new_bag_name)
+
+    if(bag_name.endswith("FakeObstruction.bag")):
+        insert_fake_object_signal(new_bag_name)
 
     # Fix rosbag timings due to inserting messages asynchronously
     os.system("rosbag fix " + new_bag_name + " " + new_bag_name)
