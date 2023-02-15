@@ -3,6 +3,7 @@
 from fileinput import filename
 import rospy
 from std_msgs.msg import String
+from video_logging.msg import FilterSwitch
 import numpy as np
 import time
 from datetime import datetime
@@ -30,6 +31,7 @@ from JackalSSH import JackalSSH
 # For printing formatting
 class Color:
    PURPLE = '\033[95m'
+   MAGENTA = '\033[35m'
    CYAN = '\033[96m'
    DARKCYAN = '\033[36m'
    BLUE = '\033[94m'
@@ -128,6 +130,15 @@ class AR_error_diagnostics:
         sys.exit(0)
 
     def all_loop(self):
+
+        # Block live data stream initially
+        print("  Blocking all data streams initially...")
+        filters = FilterSwitch(
+            velodyne_blocked=True,
+            camera_blocked=True
+        )
+        JackalSSH().ros_pub_filterswitch(filters).kill()
+
         #Find and open file with conditions and errors used by each participant
         signal.signal(signal.SIGINT, self.signal_handler)
         pol_file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
@@ -173,7 +184,10 @@ class AR_error_diagnostics:
             #Print error information here
             print("\nThe error will be " + Color.BOLD + Color.CYAN + Errors.types[self.errors[l]] + Color.END)
             #Print condition for operator to know which method is being used
-            print("The condition required for this error is " + Color.BOLD + Color.CYAN + Conditions.conditions[self.conditions[l]] + Color.END)
+            print("The condition required for this error is " + Color.BOLD + Color.RED + Conditions.conditions[self.conditions[l]] + Color.END)
+            #Print location where Jackal needs to be
+            location = Errors.jackal_locations["live"] if Conditions.conditions[self.conditions[l]].split(" + ")[1] == "live" else Errors.jackal_locations[self.errors[l]]
+            print("The Jackal will be located at: " + Color.BOLD + Color.YELLOW + location + Color.END)
             cont = input("Do you want to perform this Error/condition? (Y/N)  ")
             check = 0
             if cont == "Y" or cont == "N":
@@ -188,7 +202,7 @@ class AR_error_diagnostics:
 
             self.configure_device_connections(Conditions.conditions[self.conditions[l]], Errors.rosbags[self.errors[l]])
 
-            wait = input("\nEnsure the Jackal is located at: " + Color.BOLD + Color.YELLOW + Errors.jackal_locations[self.errors[l]] + Color.END + "\nPrepare condition now and ensure devices are connected.\nPress any key to begin streaming data   ")
+            wait = input("\nPrepare condition now and ensure devices are connected.\nPress any key to begin streaming data   ")
             print("\n")
             #Once user has confirmed ready, switch to other file to start condition
             
