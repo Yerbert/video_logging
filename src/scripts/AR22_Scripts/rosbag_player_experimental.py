@@ -116,6 +116,8 @@ class Run_Condition():
             data_to_write = self.record_data(error,condition)
             self.stop_rosbag(rosbag_player,clock)
         
+        # End of scenario...
+
         print("  Blocking data stream (enabling filters)...")
         # Block all data
         filters = FilterSwitch(
@@ -124,6 +126,10 @@ class Run_Condition():
         )
         self.filter_pub.publish(filters)
         JackalSSH().ros_pub_filterswitch(filters).kill()
+
+        # Clear fake object
+        print("  Clearing fake object...")
+        JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "false").kill()
 
         print("  Clearing scenario...")
         # Clear scenario
@@ -155,6 +161,11 @@ class Run_Condition():
         # Localise Jackal to origin
         print("  Localising Jackal to map origin...")
         j3 = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
+
+        # Turn on effect non-existent object in point cloud
+        fake_obj = str(error == "Robot Senses Non-existent Object").lower()
+        print("  Setting fake object effect in point cloud to {}".format(fake_obj))
+        j4 = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "{}".format(fake_obj))
         
         wait_seconds = 5
         print("  Allowing {} seconds...".format(wait_seconds))
@@ -164,6 +175,7 @@ class Run_Condition():
         j1.kill(0)
         j2.kill(0)
         j3.kill(0)
+        j4.kill(0)
         
 
     def stop_livestream(self):
