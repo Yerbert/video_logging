@@ -31,7 +31,7 @@ class JackalSSH:
     def ros_pub_filterswitch(self, msg):
         # msg must be a FilterSwitch
         msg_data_text = ('{' + str(msg).replace('\n',', ') + '}').lower()
-        self.ros_pub("/filters", "video_logging/FilterSwitch", msg_data_text)
+        self.ros_pub("/filters", "process_messages/FilterSwitch", msg_data_text)
         return self
 
     def ros_pub_condition(self, condition):
@@ -40,7 +40,7 @@ class JackalSSH:
     
     def kill(self, wait=4):
         # in most cases, publishing from cmd line "latches" 3 seconds
-        print("<killing SSH, waiting {} seconds...>".format(wait))
+        print("  <killing SSH, waiting {} seconds...>".format(wait))
         rospy.sleep(wait)
         os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
         del self.process

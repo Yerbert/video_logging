@@ -3,6 +3,7 @@
 from fileinput import filename
 import rospy
 from std_msgs.msg import String
+from video_logging.msg import FilterSwitch
 import numpy as np
 import time
 from datetime import datetime
@@ -26,6 +27,20 @@ from openpyxl import load_workbook, Workbook
 
 import rosbag_player_experimental
 from JackalSSH import JackalSSH
+
+# For printing formatting
+class Color:
+   PURPLE = '\033[95m'
+   MAGENTA = '\033[35m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
 
 class Errors:
     name = None
@@ -51,6 +66,18 @@ class Errors:
                         "H": "LocalisationError.bag",
                         "T": "TrainingRecording.bag"
                         }
+    jackal_locations = {
+                        "A"     : "Point A (near desk)",
+                        "B"     : "Point C (middle)",
+                        "C"     : "Point A (near desk)",
+                        "D"     : "Point A (near desk)",
+                        "E"     : "Point A (near desk), slightly towards gap in barriers",
+                        "F"     : "Point A (near desk), slightly towards gap in barriers",
+                        "G"     : "Point A (near desk)",
+                        "H"     : "Point A (near desk)",
+                        "T"     : "Point A (near desk)",
+                        "live"  : "Point B (map origin)",
+    }
 
 class Conditions:
     name = None
@@ -103,6 +130,15 @@ class AR_error_diagnostics:
         sys.exit(0)
 
     def all_loop(self):
+
+        # Block live data stream initially
+        print("  Blocking all data streams initially...")
+        filters = FilterSwitch(
+            velodyne_blocked=True,
+            camera_blocked=True
+        )
+        JackalSSH().ros_pub_filterswitch(filters).kill()
+
         #Find and open file with conditions and errors used by each participant
         signal.signal(signal.SIGINT, self.signal_handler)
         pol_file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
@@ -146,9 +182,12 @@ class AR_error_diagnostics:
         #Go through each error
         for l, error in enumerate(self.errors):
             #Print error information here
-            print("\nThe error will be " + Errors.types[self.errors[l]])
+            print("\nThe error will be " + Color.BOLD + Color.CYAN + Errors.types[self.errors[l]] + Color.END)
             #Print condition for operator to know which method is being used
-            print("The condition required for this error is " + Conditions.conditions[self.conditions[l]])
+            print("The condition required for this error is " + Color.BOLD + Color.RED + Conditions.conditions[self.conditions[l]] + Color.END)
+            #Print location where Jackal needs to be
+            location = Errors.jackal_locations["live"] if Conditions.conditions[self.conditions[l]].split(" + ")[1] == "live" else Errors.jackal_locations[self.errors[l]]
+            print("The Jackal will be located at: " + Color.BOLD + Color.YELLOW + location + Color.END)
             cont = input("Do you want to perform this Error/condition? (Y/N)  ")
             check = 0
             if cont == "Y" or cont == "N":
@@ -183,11 +222,11 @@ class AR_error_diagnostics:
     def configure_device_connections(self, new_condition, rosbag_name):
 
         sleep_seconds = 6
-        print("\nSignalling devices to configure connections...")
+        print("\n  Signalling devices to configure connections...")
         
         self.condition_pub.publish(String(new_condition))
         JackalSSH().ros_pub_condition(new_condition).kill()
-        print("Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
+        print("  Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
         rospy.sleep(sleep_seconds) # to allow reconnections to occur
 
 if __name__ == '__main__':

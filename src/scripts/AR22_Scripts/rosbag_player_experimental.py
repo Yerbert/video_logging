@@ -64,22 +64,22 @@ class Run_Condition():
     def on_release(self, key):  # The function that's called when a key is released
         return
 
-    def publish_infologs(self, rosbag_name):
-        f = open(rospkg.RosPack().get_path('video_logging') + '/src/scripts/AR22_Scripts/infologs.json')
-        data = json.load(f)
-        messages = None
-        for bag in data:
-            if(rosbag_name.endswith(bag["bag_name"])):
-                f.close()
-                messages = bag["infologs"]
-                break
-        if(messages == None):
-            print("[ERROR] Infologs for this bag are undefined in infologs.json file!")
-            f.close()
-            sys.exit(0)
-        for i in range(len(messages)):
-            msg = "[ Timestamp: {:.2f} secs ]\n".format(messages[i]["time"]) + messages[i]["text"]
-            self.infologs_pub.publish(String(msg))
+    # def publish_infologs(self, rosbag_name):
+    #     f = open(rospkg.RosPack().get_path('video_logging') + '/src/scripts/AR22_Scripts/infologs.json')
+    #     data = json.load(f)
+    #     messages = None
+    #     for bag in data:
+    #         if(rosbag_name.endswith(bag["bag_name"])):
+    #             f.close()
+    #             messages = bag["infologs"]
+    #             break
+    #     if(messages == None):
+    #         rp.logerror("  Infologs for this bag are undefined in infologs.json file!")
+    #         f.close()
+    #         sys.exit(0)
+    #     for i in range(len(messages)):
+    #         msg = "[ Timestamp: {:.2f} secs ]\n".format(messages[i]["time"]) + messages[i]["text"]
+    #         self.infologs_pub.publish(String(msg))
         
     def publish_tfs(self, rosbag_name):
 
@@ -136,7 +136,8 @@ class Run_Condition():
 
         # Set filters
         # Uses 3 JackalSSH's so that they are all done in parallel
-        print("Setting filters...")
+        print("\n  Livestream started.")
+        print("  Setting filters...")
         filters = FilterSwitch(
             velodyne_flicker = error in ["Velodyne LIDAR Failure"],
             velodyne_blocked = error in [],
@@ -146,15 +147,15 @@ class Run_Condition():
         self.filter_pub.publish(filters)
         j1 = JackalSSH().ros_pub_filterswitch(filters)
         
-        print("Sending infologs...")
+        print("  Sending infologs...")
         j2 = JackalSSH().send_cmd('python live_infologs_publisher.py ' + rosbag_name)
 
         # Localise Jackal to origin
-        print("Localising Jackal to map origin...")
+        print("  Localising Jackal to map origin...")
         j3 = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
         
         wait_seconds = 5
-        print("Allowing {} seconds...".format(wait_seconds))
+        print("  Allowing {} seconds...".format(wait_seconds))
         rp.sleep(wait_seconds)
         
         # Kill ssh's
@@ -164,8 +165,7 @@ class Run_Condition():
         
 
     def stop_livestream(self):
-        print("placeholder")
-        self.clear_scenario_pub.publish()
+        print("  Livestream stopped")
 
     def play_rosbag(self,rosbag_name):
 
