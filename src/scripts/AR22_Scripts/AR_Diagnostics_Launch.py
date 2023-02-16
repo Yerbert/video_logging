@@ -175,6 +175,8 @@ class AR_error_diagnostics:
         self.errors[1] = "T"
         self.conditions[0] = "1"
         self.conditions[1] = "3"
+
+        #Display all scenarios
         print("\nThe order of scenarios will be:")
         for err,cond in zip(self.errors,self.conditions):
             print("  {0: <17}".format(Conditions.conditions[cond]), Errors.types[err])
