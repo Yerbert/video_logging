@@ -128,7 +128,7 @@ class Run_Condition():
             camera_blocked=True
         )
         self.filter_pub.publish(filters)
-        JackalSSH().ros_pub_msg("/filters", "process_messages/FilterSwitch", filters).kill()
+        JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters).kill()
 
         # Clear fake object
         print("  Clearing fake object...")
@@ -140,7 +140,7 @@ class Run_Condition():
         clear_all = ClearScenario(True, True, True, True)
         self.clear_scenario_pub.publish(clear_all)
         # JackalSSH().ros_pub("/clear_scenario", "std_msgs/Empty", {}).kill()
-        JackalSSH().ros_pub_msg("/clear_scenario", "process_messages/ClearScenario", clear_all).kill()
+        JackalSSH().ros_pub_msg("/clear_scenario", "video_logging/ClearScenario", clear_all).kill()
 
         return data_to_write
 
@@ -160,10 +160,10 @@ class Run_Condition():
         )
         self.filter_pub.publish(filters)
         # j1 = JackalSSH().ros_pub_filterswitch(filters)
-        j1 = JackalSSH().ros_pub_msg("/filters", "process_messages/FilterSwitch", filters)
+        j1 = JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters)
         
         print("  Sending infologs...")
-        j2 = JackalSSH().send_cmd('python /home/administrator/catkin_ws/src/process_messages/src/live_infologs_publisher.py ' + rosbag_name)
+        j2 = JackalSSH().send_cmd('python /home/administrator/catkin_ws/src/video_logging/src/live_infologs_publisher.py ' + rosbag_name)
 
         # Localise Jackal to origin
         print("  Localising Jackal to map origin...")
@@ -178,7 +178,7 @@ class Run_Condition():
 
         # Send single point cloud frame for lidar/localisation error
         if error == "Velodyne LIDAR Failure and Localisation Error":
-            j5 = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/process_messages/src/SingleLive.bag')
+            j5 = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleLive.bag')
         
         wait_seconds = 5
         print("  Allowing {} seconds...".format(wait_seconds))
