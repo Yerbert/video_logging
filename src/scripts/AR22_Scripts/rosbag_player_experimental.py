@@ -143,7 +143,7 @@ class Run_Condition():
     def start_livestream(self,error,rosbag_name):
 
         # Set filters
-        # Uses 3 JackalSSH's so that they are all done in parallel
+        # Uses multiple JackalSSH's so that they are all done in parallel
         print("\n  Livestream started.")
         print("  Setting filters...")
         filters = FilterSwitch(
@@ -166,6 +166,10 @@ class Run_Condition():
         fake_obj = str(error == "Robot Senses Non-existent Object").lower()
         print("  Setting fake object effect in point cloud to {}".format(fake_obj))
         j4 = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "{}".format(fake_obj))
+
+        # Send single point cloud frame for lidar/localisation error
+        if error == "Velodyne LIDAR Failure and Localisation Error":
+            j5 = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/process_messages/src/SingleLive.bag')
         
         wait_seconds = 5
         print("  Allowing {} seconds...".format(wait_seconds))
@@ -176,6 +180,7 @@ class Run_Condition():
         j2.kill(0)
         j3.kill(0)
         j4.kill(0)
+        j5.kill(0)
         
 
     def stop_livestream(self):

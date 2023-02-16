@@ -61,7 +61,7 @@ class Errors:
                         "C": "CameraFailure.bag",
                         "D": "VelodyneError.bag",
                         "E": "HumanObstruction.bag",
-                        "F": "HumanObstruction.bag",
+                        "F": "FakeObstruction.bag",
                         "G": "DroppedPayload.bag",
                         "H": "LocalisationError.bag",
                         "T": "TrainingRecording.bag"
@@ -70,11 +70,11 @@ class Errors:
                         "A"     : "Point A (near desk)",
                         "B"     : "Point C (middle)",
                         "C"     : "Point A (near desk)",
-                        "D"     : "Point C (middle)",
+                        "D"     : "Point A (near desk)",
                         "E"     : "Point A (near desk), slightly towards gap in barriers",
-                        "F"     : "Point A (near desk), slightly towards gap in barriers",
+                        "F"     : "Point C (middle)",
                         "G"     : "Point A (near desk)",
-                        "H"     : "Point A (near desk)",
+                        "H"     : "Point C (middle)",
                         "T"     : "Point A (near desk)",
                         "live"  : "Point B (map origin)",
     }
@@ -167,7 +167,7 @@ class AR_error_diagnostics:
 
         #Find order of errors for current participant
         for i in range(2,10):
-            col = i+6
+            col = i+4
             self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
         
         #Add static training scenarios to lists
@@ -175,6 +175,10 @@ class AR_error_diagnostics:
         self.errors[1] = "T"
         self.conditions[0] = "1"
         self.conditions[1] = "3"
+        print("\nThe order of scenarios will be:")
+        for err,cond in zip(self.errors,self.conditions):
+            print("  {0: <17}".format(Conditions.conditions[cond]), Errors.types[err])
+        print("\n")
         workbook = MyWorkbook()
 
         input("Run through first page of instructions if not already done. Press enter to continue once completed    ")
@@ -211,7 +215,7 @@ class AR_error_diagnostics:
             data_to_write = play_condition.run_condition(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]],Conditions.conditions[self.conditions[l]])
             
             if l == 1:
-                input("Provide instructions on difference between live and replay and then press enter    ")
+                input("\nProvide instructions on difference between live and replay and then press enter    ")
                 print("\n\nTraining complete. About to move onto study.... \n\n")
             if l > 1:
                 MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
