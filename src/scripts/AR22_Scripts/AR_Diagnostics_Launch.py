@@ -138,7 +138,7 @@ class AR_error_diagnostics:
             camera_blocked=True
         )
         # JackalSSH().ros_pub_filterswitch(filters).kill()
-        JackalSSH().ros_pub_msg("/filters", "process_messages/FilterSwitch", filters).kill()
+        JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters).kill()
         # Removing fake objects initially
 
         #Find and open file with conditions and errors used by each participant
