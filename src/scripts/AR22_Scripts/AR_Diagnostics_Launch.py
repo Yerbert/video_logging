@@ -137,7 +137,9 @@ class AR_error_diagnostics:
             velodyne_blocked=True,
             camera_blocked=True
         )
-        JackalSSH().ros_pub_filterswitch(filters).kill()
+        # JackalSSH().ros_pub_filterswitch(filters).kill()
+        JackalSSH().ros_pub_msg("/filters", "process_messages/FilterSwitch", filters).kill()
+        # Removing fake objects initially
 
         #Find and open file with conditions and errors used by each participant
         signal.signal(signal.SIGINT, self.signal_handler)
