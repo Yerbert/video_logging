@@ -28,10 +28,10 @@ class JackalSSH:
         ))
         return self
     
-    def ros_pub_filterswitch(self, msg):
-        # msg must be a FilterSwitch
+    def ros_pub_msg(self, topic_name, msg_type, msg):
+        # Msg is a msg object
         msg_data_text = ('{' + str(msg).replace('\n',', ') + '}').lower()
-        self.ros_pub("/filters", "process_messages/FilterSwitch", msg_data_text)
+        self.ros_pub(topic_name, msg_type, msg_data_text)
         return self
 
     def ros_pub_condition(self, condition):
