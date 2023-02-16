@@ -141,42 +141,50 @@ class AR_error_diagnostics:
         JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters).kill()
         # Removing fake objects initially
 
-        #Find and open file with conditions and errors used by each participant
         signal.signal(signal.SIGINT, self.signal_handler)
-        pol_file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
-        pol_filename = "pol.xlsx"
-        pol_wb = load_workbook(os.path.join(pol_file_path, pol_filename))
-        pol_sheet = pol_wb.active
-        pol_rows = 31
-        pol_columns = pol_sheet.max_column
-        participant_row = 0
 
-        #Find row relating to current participant
-        for i in range(2,pol_rows):
-            number = int(pol_sheet.cell(row = i, column = 1).value)
-            if number == self.participant_no:
-                participant_row = i
+        # ELIZABETH
+        if self.participant_no == 0:
+            self.conditions = ["1", "2", "3", "4"]
+            self.errors = ["G", "C", "F", "D"]
         
-        #Find order of conditions for current participant
-        j = 2
-        for i in range(2,6):
-            condition = int(pol_sheet.cell(row = participant_row, column = i).value)
-            self.conditions[j] = str(condition)
-            j = j + 1
-            self.conditions[j] = str(condition)
-            j = j + 1
+        # Regular User Study Participant
+        else:
+            #Find and open file with conditions and errors used by each participant
+            pol_file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
+            pol_filename = "pol.xlsx"
+            pol_wb = load_workbook(os.path.join(pol_file_path, pol_filename))
+            pol_sheet = pol_wb.active
+            pol_rows = 31
+            pol_columns = pol_sheet.max_column
+            participant_row = 0
+
+            #Find row relating to current participant
+            for i in range(2,pol_rows):
+                number = int(pol_sheet.cell(row = i, column = 1).value)
+                if number == self.participant_no:
+                    participant_row = i
+            
+            #Find order of conditions for current participant
+            j = 2
+            for i in range(2,6):
+                condition = int(pol_sheet.cell(row = participant_row, column = i).value)
+                self.conditions[j] = str(condition)
+                j = j + 1
+                self.conditions[j] = str(condition)
+                j = j + 1
 
 
-        #Find order of errors for current participant
-        for i in range(2,10):
-            col = i+4
-            self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
-        
-        #Add static training scenarios to lists
-        self.errors[0] = "T"
-        self.errors[1] = "T"
-        self.conditions[0] = "1"
-        self.conditions[1] = "3"
+            #Find order of errors for current participant
+            for i in range(2,10):
+                col = i+4
+                self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
+            
+            #Add static training scenarios to lists
+            self.errors[0] = "T"
+            self.errors[1] = "T"
+            self.conditions[0] = "1"
+            self.conditions[1] = "3"
 
         #Display all scenarios
         print("\nThe order of scenarios will be:")
