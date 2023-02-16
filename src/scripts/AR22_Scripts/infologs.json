@@ -56,6 +56,20 @@
                 "time": 14.20,
                 "text": "[ ERROR ] Failed to navigate to Goal B."
             }
+        ],
+        "fakeObjectSignal": [
+            {
+                "time": 0.15,
+                "bool": false
+            },
+            {
+                "time": 10.5,
+                "bool": true
+            },
+            {
+                "time": 16.0,
+                "bool": false
+            }
         ]
     },
     {
