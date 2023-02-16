@@ -7,6 +7,7 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/Bool.h>
 #include <video_logging/FilterSwitch.h>
+#include <video_logging/ClearScenario.h>
 
 #include <iostream>
 #include <math.h>
@@ -58,6 +59,10 @@ class StutterFilter : public Filter
 				count = 0;
 				limit = rand_int(rand_min, rand_max) * stutter_size;
 				block = !block;
+
+				if (block) {
+					// publish clear message
+				}
 			}
 
 			return (this->enabled && block);
@@ -91,6 +96,7 @@ int video_counter = 0;
 ros::Publisher pointcloud_pub;
 ros::Publisher video_pub;
 ros::Publisher tf_pub;
+ros::Publisher clear_pub;
 
 StutterFilter camera_flicker(1);
 BlockFilter camera_blocked;
@@ -198,10 +204,17 @@ pcl::PointXYZ create_fake_point() {
 
 void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 {
-	bool filtered = velodyne_blocked.filter() || velodyne_flicker.filter();
-	if (filtered) {
+	if (velodyne_blocked.filter()) {
 		return;
 	}
+
+	if (velodyne_flicker.filter()) {
+		video_logging::ClearScenario clear_pcl;
+		clear_pcl.point_cloud = true;
+		clear_pub.publish(clear_pcl);
+		return;
+	}
+
 
 	pointcloud_counter = (pointcloud_counter + 1) % pointcloud_downsample;
 	if (pointcloud_counter != 0) {
@@ -280,6 +293,7 @@ int main(int argc, char** argv)
 	std::string tf_intopic = "/tf";
 	std::string tf_outtopic = "/tf";
 
+	std::string clear_outtopic = "/clear_scenario";
 	std::string filter_intopic = "/filters";
 	std::string fakeobj_intopic = "/fake_object";
 
@@ -297,6 +311,9 @@ int main(int argc, char** argv)
 	tf_pub = nh.advertise<tf2_msgs::TFMessage>(tf_outtopic, 1);
 	ros::Subscriber tf_sub = nh.subscribe(tf_intopic, 1, tf_callback);
 	std::cout << "Republishing tf from \n  " << tf_intopic << "\nto\n  " << tf_outtopic << "\n";
+
+	// Clear scenario
+	clear_pub = nh.advertise<video_logging::ClearScenario>(clear_outtopic, 1);
 
 	// Filters
 	ros::Subscriber filter_sub = nh.subscribe(filter_intopic, 1, filter_callback);
