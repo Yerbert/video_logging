@@ -155,8 +155,8 @@ class AR_error_diagnostics:
 
         # ELIZABETH
         if self.participant_no == 0:
-            self.conditions = ["1", "2", "3", "4"]
-            self.errors = ["G", "C", "F", "D"]
+            self.conditions = ["4", "3", "2", "1"]
+            self.errors = ["D", "F", "C", "G"]
         
         # Regular User Study Participant
         else:
@@ -236,16 +236,15 @@ class AR_error_diagnostics:
             play_condition = rosbag_player_experimental.Run_Condition()
             data_to_write = play_condition.run_condition(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]],Conditions.conditions[self.conditions[l]])
 
-            # Don't record for Elizabeth
-            if self.participant_no == 0:
-                continue
+            # If not training or is ELizabeth
+            if l > 1 or self.participant_no == 0:
+                MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
+                print("Error " + str(l+1) + " completed\n\n\n")
             
             if l == 1:
                 input("\nProvide instructions on difference between live and replay and then press enter    ")
                 print("\n\nTraining complete. About to move onto study.... \n\n")
-            if l > 1:
-                MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
-                print("Error " + str(l+1) + " completed\n\n\n")
+            
         print("All error conditions complete, exiting...\n\n")
     
 
