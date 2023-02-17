@@ -260,7 +260,7 @@ class AR_error_diagnostics:
 
 if __name__ == '__main__':
     rospy.init_node('error_diagnostics_user_study')
-    participant_no = input("Enter Participant Number: ")
+    participant_no = input("Enter Participant Number (0 = Elizabeth): ")
     
     AR_error_diagnostics_obj = AR_error_diagnostics(participant_no)
     AR_error_diagnostics_obj.all_loop() 
