@@ -159,37 +159,46 @@ class Run_Condition():
             camera_blocked   = error in ["Camera Sensor Failure"]
         )
         self.filter_pub.publish(filters)
+
+        ssh_lst = []
         # j1 = JackalSSH().ros_pub_filterswitch(filters)
-        j1 = JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters)
+        j = JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters)
+        ssh_lst.append(j)
         
         print("  Sending infologs...")
-        j2 = JackalSSH().send_cmd('python /home/administrator/catkin_ws/src/video_logging/src/live_infologs_publisher.py ' + rosbag_name)
+        j = JackalSSH().send_cmd('python /home/administrator/catkin_ws/src/video_logging/src/live_infologs_publisher.py ' + rosbag_name)
+        ssh_lst.append(j)
 
         # Localise Jackal to origin
         print("  Localising Jackal to map origin...")
-        j3 = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
+        j = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
+        ssh_lst.append(j)
 
         # Turn on effect non-existent object in point cloud
         fake_obj = (error == "Robot Senses Non-existent Object")
         fake_obj_str = str(fake_obj).lower()
         print("  Setting fake object effect in point cloud to {}".format(fake_obj_str))
-        self.fake_obj_pub.publish(Bool(fake_obj))
-        # j4 = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", fake_obj_str)
+        # self.fake_obj_pub.publish(Bool(fake_obj))
+        j = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", fake_obj_str)
+        ssh_lst.append(j)
 
         # Send single point cloud frame for lidar/localisation error
         if error == "Velodyne LIDAR Failure and Localisation Error":
-            j5 = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleLive.bag')
+            j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleVelodyneLive.bag')
+            ssh_lst.append(j)
+        
+        # Send single camera frame for camera failure
+        if error == "Camera Sensor Failure":
+            j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleCameraLive.bag')
+            ssh_lst.append(j)
         
         wait_seconds = 5
         print("  Allowing {} seconds...".format(wait_seconds))
         rp.sleep(wait_seconds)
         
         # Kill ssh's
-        j1.kill(0)
-        j2.kill(0)
-        j3.kill(0)
-        j4.kill(0)
-        j5.kill(0)
+        for ssh in ssh_lst:
+            ssh.kill(0)
         
 
     def stop_livestream(self):

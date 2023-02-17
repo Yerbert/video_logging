@@ -138,45 +138,63 @@ class AR_error_diagnostics:
             camera_blocked=True
         )
         # JackalSSH().ros_pub_filterswitch(filters).kill()
-        JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters).kill()
+        j1 = JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters)
         # Removing fake objects initially
+        print("  Disabling fake object...")
+        j2 = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "false")
+        os.system("rostopic pub -1 /fake_object std_msgs/Bool false") # Cheeky lil publish
+        
+        # Kill ssh's
+        j1.kill(4)
+        j2.kill(0)
 
-        #Find and open file with conditions and errors used by each participant
+        # Signal handler
         signal.signal(signal.SIGINT, self.signal_handler)
-        pol_file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
-        pol_filename = "pol.xlsx"
-        pol_wb = load_workbook(os.path.join(pol_file_path, pol_filename))
-        pol_sheet = pol_wb.active
-        pol_rows = 31
-        pol_columns = pol_sheet.max_column
-        participant_row = 0
 
-        #Find row relating to current participant
-        for i in range(2,pol_rows):
-            number = int(pol_sheet.cell(row = i, column = 1).value)
-            if number == self.participant_no:
-                participant_row = i
+
+
+        # ELIZABETH
+        if self.participant_no == 0:
+            self.conditions = ["1", "2", "3", "4"]
+            self.errors = ["G", "C", "F", "D"]
         
-        #Find order of conditions for current participant
-        j = 2
-        for i in range(2,6):
-            condition = int(pol_sheet.cell(row = participant_row, column = i).value)
-            self.conditions[j] = str(condition)
-            j = j + 1
-            self.conditions[j] = str(condition)
-            j = j + 1
+        # Regular User Study Participant
+        else:
+            #Find and open file with conditions and errors used by each participant
+            pol_file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
+            pol_filename = "pol.xlsx"
+            pol_wb = load_workbook(os.path.join(pol_file_path, pol_filename))
+            pol_sheet = pol_wb.active
+            pol_rows = 31
+            pol_columns = pol_sheet.max_column
+            participant_row = 0
+
+            #Find row relating to current participant
+            for i in range(2,pol_rows):
+                number = int(pol_sheet.cell(row = i, column = 1).value)
+                if number == self.participant_no:
+                    participant_row = i
+            
+            #Find order of conditions for current participant
+            j = 2
+            for i in range(2,6):
+                condition = int(pol_sheet.cell(row = participant_row, column = i).value)
+                self.conditions[j] = str(condition)
+                j = j + 1
+                self.conditions[j] = str(condition)
+                j = j + 1
 
 
-        #Find order of errors for current participant
-        for i in range(2,10):
-            col = i+4
-            self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
-        
-        #Add static training scenarios to lists
-        self.errors[0] = "T"
-        self.errors[1] = "T"
-        self.conditions[0] = "1"
-        self.conditions[1] = "3"
+            #Find order of errors for current participant
+            for i in range(2,10):
+                col = i+4
+                self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
+            
+            #Add static training scenarios to lists
+            self.errors[0] = "T"
+            self.errors[1] = "T"
+            self.conditions[0] = "1"
+            self.conditions[1] = "3"
 
         #Display all scenarios
         print("\nThe order of scenarios will be:")
@@ -217,6 +235,10 @@ class AR_error_diagnostics:
             
             play_condition = rosbag_player_experimental.Run_Condition()
             data_to_write = play_condition.run_condition(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]],Conditions.conditions[self.conditions[l]])
+
+            # Don't record for Elizabeth
+            if self.participant_no == 0:
+                continue
             
             if l == 1:
                 input("\nProvide instructions on difference between live and replay and then press enter    ")
@@ -233,7 +255,7 @@ class AR_error_diagnostics:
         print("\n  Signalling devices to configure connections...")
         
         self.condition_pub.publish(String(new_condition))
-        JackalSSH().ros_pub_condition(new_condition).kill()
+        JackalSSH().ros_pub_condition(new_condition).kill(3)
         print("  Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
         rospy.sleep(sleep_seconds) # to allow reconnections to occur
 
