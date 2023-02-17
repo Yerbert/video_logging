@@ -184,7 +184,12 @@ class Run_Condition():
 
         # Send single point cloud frame for lidar/localisation error
         if error == "Velodyne LIDAR Failure and Localisation Error":
-            j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleLive.bag')
+            j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleVelodyneLive.bag')
+            ssh_lst.append(j)
+        
+        # Send single camera frame for camera failure
+        if error == "Camera Sensor Failure":
+            j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleCameraLive.bag')
             ssh_lst.append(j)
         
         wait_seconds = 5

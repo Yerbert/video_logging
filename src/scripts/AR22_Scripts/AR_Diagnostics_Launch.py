@@ -138,10 +138,20 @@ class AR_error_diagnostics:
             camera_blocked=True
         )
         # JackalSSH().ros_pub_filterswitch(filters).kill()
-        JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters).kill()
+        j1 = JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters)
         # Removing fake objects initially
+        print("  Disabling fake object...")
+        j2 = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "false")
+        os.system("rostopic pub -1 /fake_object std_msgs/Bool false") # Cheeky lil publish
+        
+        # Kill ssh's
+        j1.kill(4)
+        j2.kill(0)
 
+        # Signal handler
         signal.signal(signal.SIGINT, self.signal_handler)
+
+
 
         # ELIZABETH
         if self.participant_no == 0:
@@ -225,6 +235,10 @@ class AR_error_diagnostics:
             
             play_condition = rosbag_player_experimental.Run_Condition()
             data_to_write = play_condition.run_condition(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]],Conditions.conditions[self.conditions[l]])
+
+            # Don't record for Elizabeth
+            if self.participant_no == 0:
+                continue
             
             if l == 1:
                 input("\nProvide instructions on difference between live and replay and then press enter    ")
@@ -241,7 +255,7 @@ class AR_error_diagnostics:
         print("\n  Signalling devices to configure connections...")
         
         self.condition_pub.publish(String(new_condition))
-        JackalSSH().ros_pub_condition(new_condition).kill()
+        JackalSSH().ros_pub_condition(new_condition).kill(3)
         print("  Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
         rospy.sleep(sleep_seconds) # to allow reconnections to occur
 
