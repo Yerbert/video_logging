@@ -3,12 +3,16 @@ import signal
 import rospy
 import os
 import json
-from video_logging.msg import FilterSwitch
+
+"""
+Wrapper class for easy SSH'ing into Jackal robot.
+Always call the .kill() method when you no longer need it.
+"""
 
 class JackalSSH:
     def __init__(self):
         self.process = subprocess.Popen(
-            "sshpass -p clearpath ssh -tt administrator@160.69.69.10\n",
+            "sshpass -p clearpath ssh -tt administrator@160.69.69.100\n",
             shell=True,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -30,6 +34,7 @@ class JackalSSH:
     
     def ros_pub_msg(self, topic_name, msg_type, msg):
         # Msg is a msg object
+        # Also assumes no uppercase characters
         msg_data_text = ('{' + str(msg).replace('\n',', ') + '}').lower()
         self.ros_pub(topic_name, msg_type, msg_data_text)
         return self
