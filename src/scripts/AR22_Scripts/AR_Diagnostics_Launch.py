@@ -53,7 +53,8 @@ class Errors:
                         "F": "Robot Senses Non-existent Object",
                         "G": "Dropped Payload",
                         "H": "Velodyne LIDAR Failure and Localisation Error",
-                        "T": "Training Scenario"
+                        "T": "Training Scenario",
+                        "R": "Regular"
     }
     rosbags = {
                         "A": "FlatTyre.bag",
@@ -64,7 +65,8 @@ class Errors:
                         "F": "FakeObstruction.bag",
                         "G": "DroppedPayload.bag",
                         "H": "LocalisationError.bag",
-                        "T": "TrainingRecording.bag"
+                        "T": "TrainingRecording.bag",
+                        "R": "Regular.bag"
                         }
     jackal_locations = {
                         "A"     : "Point A (near desk)",
@@ -77,6 +79,7 @@ class Errors:
                         "H"     : "Point C (middle)",
                         "T"     : "Point A (near desk)",
                         "live"  : "Point B (map origin)",
+                        "R"     : "Origin"
     }
 
 class Conditions:
@@ -153,10 +156,10 @@ class AR_error_diagnostics:
 
 
 
-        # ELIZABETH
+        # TEST
         if self.participant_no == 0:
-            self.conditions = ["4", "3", "2", "1"]
-            self.errors = ["D", "F", "C", "G"]
+            self.conditions = ["1"]
+            self.errors = ["R"]
         
         # Regular User Study Participant
         else:
@@ -260,7 +263,7 @@ class AR_error_diagnostics:
 
 if __name__ == '__main__':
     rospy.init_node('error_diagnostics_user_study')
-    participant_no = input("Enter Participant Number (0 = Elizabeth): ")
+    participant_no = input("Enter Participant Number (0 = Test): ")
     
     AR_error_diagnostics_obj = AR_error_diagnostics(participant_no)
     AR_error_diagnostics_obj.all_loop() 

@@ -92,23 +92,9 @@ class Run_Condition():
                     tf_path.append(tf)
         self.tf_pub.publish(TFMessage(tf_path))
     
-    def publish_map_replay(self, error):
-        print("Starting map server...")
-        map_yaml = "G10MapNewDelocalised.yaml" if "Localisation Error" in error else "G10MapNew.yaml"
-        map_proc = subprocess.Popen(
-            "rosrun map_server map_server " + map_yaml,
-            shell=True,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            preexec_fn=os.setsid
-        )
-        rp.sleep(2)
-        print("Killing map server...")
-        os.killpg(os.getpgid(map_proc.pid), signal.SIGTERM)
-    
     def publish_map(self, error):
         print("Starting map server...")
-        map_yaml = "G10MapNewDelocalised.yaml" if "Localisation Error" in error else "G10MapNew.yaml"
+        map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + ("G10MapNewDelocalised.yaml" if "Localisation Error" in error else "G10MapNew.yaml")
         map_proc = subprocess.Popen(
             "rosrun map_server map_server " + map_yaml,
             shell=True,
