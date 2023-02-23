@@ -9,6 +9,7 @@ import sys
 import signal
 from std_msgs.msg import Bool, Float32
 from tf2_msgs.msg import TFMessage
+from video_logging.msg import ClearScenario
 from time import sleep
 from rosgraph_msgs.msg import Clock
 
@@ -40,7 +41,7 @@ def publish_tfs(rosbag_name):
     tf_pub.publish(TFMessage(tf_path))
 
 def signal_handler(sig, frame):
-    os.system("rostopic pub -1 /infologs/end std_msgs/Bool true")
+    os.system("rostopic pub -1 /clear_scenario video_logging/ClearScenario \"{camera: true, point_cloud: true, infologs: true, tf: true}\"")
     if (tcp):
         os.killpg(os.getpgid(p.pid), signal.SIGTERM)
     sys.exit(0)

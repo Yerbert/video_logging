@@ -1,48 +1,87 @@
 [  
     {
         "bag_name": "DroppedPayload.bag",
+        "goal" :[0.0, 0.0, 0.0],
         "infologs": [
             {
                 "time": 0.99,
-                "text": "[ INFO ] Navigating to Goal A."
+                "text": "[ INFO ] Navigating to Goal."
             },
             {
                 "time": 7.31,
                 "text": "[ WARN ] Imminent impact, executing emergency manoeuvre."
             },
             {
-                "time": 16.82,
-                "text": "[ INFO ] Successfully navigating to Goal A."
+                "time": 16.52,
+                "text": "[ INFO ] Successfully navigating to Goal."
             }
         ]
     },
     {
-        "bag_name": "HumanObstruction.bag",
+        "bag_name": "GoalObstruction.bag",
+        "goal" :[0.5, -3.0, 0.0],
         "infologs": [
             {
                 "time": 1.12,
-                "text": "[ INFO ] Navigating to Goal B."
+                "text": "[ INFO ] Navigating to Goal."
             },
             {
-                "time": 15.45,
+                "time": 13.55,
                 "text": "[ WARN ] Obstruction in front of robot, rerouting path."
             },
             {
-                "time": 17.82,
+                "time": 14.32,
                 "text": "[ ERROR ]  Rerouting failed."
             },
             {
-                "time": 18.71,
-                "text": "[ ERROR ] Failed to navigate to Goal B."
+                "time": 14.71,
+                "text": "[ ERROR ] Failed to navigate to Goal."
+            }
+        ]
+    },
+    {
+        "bag_name": "FakeObstruction.bag",
+        "goal" :[0.4, -2.0, 0.0],
+        "infologs": [
+            {
+                "time": 1.11,
+                "text": "[ INFO ] Navigating to Goal."
+            },
+            {
+                "time": 12.09,
+                "text": "[ WARN ] Obstruction in front of robot, rerouting path."
+            },
+            {
+                "time": 13.75,
+                "text": "[ ERROR ]  Rerouting failed."
+            },
+            {
+                "time": 14.20,
+                "text": "[ ERROR ] Failed to navigate to Goal."
+            }
+        ],
+        "fakeObjectSignal": [
+            {
+                "time": 0.15,
+                "bool": false
+            },
+            {
+                "time": 12.00,
+                "bool": true
+            },
+            {
+                "time": 14.9,
+                "bool": false
             }
         ]
     },
     {
         "bag_name": "LocalisationError.bag",
+        "goal" :[0.0, 0.0, 0.0],
         "infologs": [
             {
                 "time": 1.09,
-                "text": "[ INFO ] Navigating to Goal A."
+                "text": "[ INFO ] Navigating to Goal."
             },
             {
                 "time": 11.59,
@@ -54,63 +93,85 @@
             },
             {
                 "time": 14.11,
-                "text": "[ ERROR ] Failed to navigate to Goal A."
+                "text": "[ ERROR ] Failed to navigate to Goal."
             }
         ]
     },
     {
         "bag_name": "MotorFailure.bag",
+        "goal" :[0.4, -2.0, 0.0],
         "infologs": [
             {
                 "time": 0.87,
-                "text": "[ INFO ] Navigating to Goal A."
+                "text": "[ INFO ] Navigating to Goal."
             },
             {
-                "time": 15.66,
-                "text": "[ ERROR ] Failed to navigate to Goal A."
+                "time": 14.66,
+                "text": "[ ERROR ] Failed to navigate to Goal."
             }
         ]
     },
     {
         "bag_name": "FlatTyre.bag",
+        "goal" :[0.0, 0.0, 0.0],
         "infologs": [
             {
                 "time": 0.88,
-                "text": "[ INFO ] Navigating to Goal A."
+                "text": "[ INFO ] Navigating to Goal."
             },
             {
                 "time": 16.68,
-                "text": "[ INFO ] Successfully navigating to Goal A."
+                "text": "[ INFO ] Successfully navigating to Goal."
             }
         ]
     },
     {
         "bag_name": "VelodyneError.bag",
+        "goal" :[0.0, 0.0, 0.0],
         "infologs": [
             {
                 "time": 1.00,
-                "text": "[ INFO ] Navigating to Goal A."
+                "text": "[ INFO ] Navigating to Goal."
             },
             {
-                "time": 16.06,
-                "text": "[ INFO ] Successfully navigating to Goal A."
+                "time": 14.06,
+                "text": "[ INFO ] Successfully navigating to Goal."
             }
         ]
     },
     {
         "bag_name": "CameraFailure.bag",
+        "goal" :[0.0, 0.0, 0.0],
         "infologs": [
             {
                 "time": 1.05,
-                "text": "[ INFO ] Navigating to Goal A."
+                "text": "[ INFO ] Navigating to Goal."
             },
             {
-                "time": 10.22,
+                "time": 8.22,
                 "text": "[ WARN ] Using LIDAR only for navigation."
             },
             {
-                "time": 16.38,
-                "text": "[ INFO ] Successfully navigating to Goal A."
+                "time": 14.38,
+                "text": "[ INFO ] Successfully navigating to Goal."
+            }
+        ]
+    },
+    {
+        "bag_name": "TrainingRecording.bag",
+        "goal" :[0.0, 0.0, 0.0],
+        "infologs": [
+            {
+                "time": 3.00,
+                "text": "[ INFO ] This is a sample info message ."
+            },
+            {
+                "time": 6.00,
+                "text": "[ WARN ] This is a sample warning message."
+            },
+            {
+                "time": 9.00,
+                "text": "[ ERROR ] This is a sample error message."
             }
         ]
     }

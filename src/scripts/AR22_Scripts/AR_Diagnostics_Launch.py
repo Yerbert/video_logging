@@ -61,7 +61,7 @@ class Errors:
                         "B": "MotorFailure.bag",
                         "C": "CameraFailure.bag",
                         "D": "VelodyneError.bag",
-                        "E": "HumanObstruction.bag",
+                        "E": "GoalObstruction.bag",
                         "F": "FakeObstruction.bag",
                         "G": "DroppedPayload.bag",
                         "H": "LocalisationError.bag",
@@ -214,9 +214,6 @@ class AR_error_diagnostics:
             print("\nThe error will be " + Color.BOLD + Color.CYAN + Errors.types[self.errors[l]] + Color.END)
             #Print condition for operator to know which method is being used
             print("The condition required for this error is " + Color.BOLD + Color.RED + Conditions.conditions[self.conditions[l]] + Color.END)
-            #Print location where Jackal needs to be
-            location = Errors.jackal_locations["live"] if Conditions.conditions[self.conditions[l]].split(" + ")[1] == "live" else Errors.jackal_locations[self.errors[l]]
-            print("The Jackal will be located at: " + Color.BOLD + Color.YELLOW + location + Color.END)
             cont = input("Do you want to perform this Error/condition? (Y/N)  ")
             check = 0
             if cont == "Y" or cont == "N":
