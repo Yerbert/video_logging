@@ -192,6 +192,12 @@ class Run_Condition():
             j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleCameraLive.bag')
             ssh_lst.append(j)
         
+        # Publish all TFs for path visualisation
+        # TODO: Add python script in Jackal to publish TF path
+        print("  Sending path from rosbag "+rosbag_name)
+        j = JackalSSH().send_cmd('python /home/administrator/catkin_ws/src/video_logging/src/path_publisher.py ' + rosbag_name)
+        ssh_lst.append(j)
+        
         wait_seconds = 5
         print("  Allowing {} seconds...".format(wait_seconds))
         rp.sleep(wait_seconds)
