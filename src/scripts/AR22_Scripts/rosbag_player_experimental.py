@@ -195,7 +195,8 @@ class Run_Condition():
 
         # Map server
         print("  Sending map...")
-        map_yaml = "G10MapNewDelocalised.yaml" if "Localisation Error" in error else "G10MapNew.yaml"
+        map_name = "G10Map2xCropped"
+        map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + (map_name+"Delocalised.yaml" if "Localisation Error" in error else map_name+".yaml")
         j = JackalSSH().send_cmd("rosrun map_server map_server " + map_yaml)
         ssh_lst.append(j)
         
