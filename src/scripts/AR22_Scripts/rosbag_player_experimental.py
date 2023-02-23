@@ -77,7 +77,8 @@ class Run_Condition():
     
     def publish_map(self, error):
         print("Starting map server...")
-        map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + ("G10MapNewDelocalised.yaml" if "Localisation Error" in error else "G10MapNew.yaml")
+        map_name = "G10Map2xCropped"
+        map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + (map_name+"Delocalised.yaml" if "Localisation Error" in error else map_name+".yaml")
         map_proc = subprocess.Popen(
             "rosrun map_server map_server " + map_yaml,
             shell=True,
