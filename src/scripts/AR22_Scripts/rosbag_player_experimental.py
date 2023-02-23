@@ -91,6 +91,34 @@ class Run_Condition():
                 if (tf.child_frame_id == "base_link" and tf.header.frame_id == "odom") or (tf.child_frame_id == "odom" and tf.header.frame_id == "map"):
                     tf_path.append(tf)
         self.tf_pub.publish(TFMessage(tf_path))
+    
+    def publish_map_replay(self, error):
+        print("Starting map server...")
+        map_yaml = "G10MapNewDelocalised.yaml" if "Localisation Error" in error else "G10MapNew.yaml"
+        map_proc = subprocess.Popen(
+            "rosrun map_server map_server " + map_yaml,
+            shell=True,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            preexec_fn=os.setsid
+        )
+        rp.sleep(2)
+        print("Killing map server...")
+        os.killpg(os.getpgid(map_proc.pid), signal.SIGTERM)
+    
+    def publish_map(self, error):
+        print("Starting map server...")
+        map_yaml = "G10MapNewDelocalised.yaml" if "Localisation Error" in error else "G10MapNew.yaml"
+        map_proc = subprocess.Popen(
+            "rosrun map_server map_server " + map_yaml,
+            shell=True,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            preexec_fn=os.setsid
+        )
+        rp.sleep(2)
+        print("Killing map server...")
+        os.killpg(os.getpgid(map_proc.pid), signal.SIGTERM)
 
     
     def signal_handler(self, sig, frame):
@@ -104,20 +132,19 @@ class Run_Condition():
         # Signal Handler to kill subprocesses
         signal.signal(signal.SIGINT, self.signal_handler)
 
-        # self.set_device_connections(condition)
         splitCondition = condition.split(" + ")
 
         data_to_write = []
         if splitCondition[1] == "live":
             #Live
             self.start_livestream(error, rosbag_name)
-            data_to_write = self.record_data(error,condition)
+            data_to_write = self.record_data(error, condition)
             self.stop_livestream()
         if splitCondition[1] == "replay":
             #Replay
-            rosbag_player, clock = self.play_rosbag(rosbag_name)
-            data_to_write = self.record_data(error,condition)
-            self.stop_rosbag(rosbag_player,clock)
+            rosbag_player, clock = self.play_rosbag(error, rosbag_name)
+            data_to_write = self.record_data(error, condition)
+            self.stop_rosbag(rosbag_player, clock)
         
         # End of scenario...
 
@@ -193,9 +220,14 @@ class Run_Condition():
             ssh_lst.append(j)
         
         # Publish all TFs for path visualisation
-        # TODO: Add python script in Jackal to publish TF path
         print("  Sending path from rosbag "+rosbag_name)
         j = JackalSSH().send_cmd('python /home/administrator/catkin_ws/src/video_logging/src/path_publisher.py ' + rosbag_name)
+        ssh_lst.append(j)
+
+        # Map server
+        print("  Sending map...")
+        map_yaml = "G10MapNewDelocalised.yaml" if "Localisation Error" in error else "G10MapNew.yaml"
+        j = JackalSSH().send_cmd("rosrun map_server map_server " + map_yaml)
         ssh_lst.append(j)
         
         wait_seconds = 5
@@ -210,7 +242,7 @@ class Run_Condition():
     def stop_livestream(self):
         print("  Livestream stopped")
 
-    def play_rosbag(self,rosbag_name):
+    def play_rosbag(self,error, rosbag_name):
 
         rospkg.RosPack().get_path('video_logging') + '/bag_files'
         
@@ -233,6 +265,10 @@ class Run_Condition():
         # Start rosbag
         rosbag_player = pyrosbag.BagPlayer(rosbag_name)
         rosbag_player.play(loop=True, publish_clock=True, quiet=True)
+
+        # Start map server
+        self.publish_map(error)
+
         return rosbag_player, clock
 
     def stop_rosbag(self,rosbag_player,clock):
