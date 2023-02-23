@@ -65,23 +65,6 @@ class Run_Condition():
 
     def on_release(self, key):  # The function that's called when a key is released
         return
-
-    # def publish_infologs(self, rosbag_name):
-    #     f = open(rospkg.RosPack().get_path('video_logging') + '/src/scripts/AR22_Scripts/infologs.json')
-    #     data = json.load(f)
-    #     messages = None
-    #     for bag in data:
-    #         if(rosbag_name.endswith(bag["bag_name"])):
-    #             f.close()
-    #             messages = bag["infologs"]
-    #             break
-    #     if(messages == None):
-    #         rp.logerror("  Infologs for this bag are undefined in infologs.json file!")
-    #         f.close()
-    #         sys.exit(0)
-    #     for i in range(len(messages)):
-    #         msg = "[ Timestamp: {:.2f} secs ]\n".format(messages[i]["time"]) + messages[i]["text"]
-    #         self.infologs_pub.publish(String(msg))
         
     def publish_tfs(self, rosbag_name):
 
@@ -139,7 +122,6 @@ class Run_Condition():
         # Clear scenario
         clear_all = ClearScenario(True, True, True, True)
         self.clear_scenario_pub.publish(clear_all)
-        # JackalSSH().ros_pub("/clear_scenario", "std_msgs/Empty", {}).kill()
         JackalSSH().ros_pub_msg("/clear_scenario", "video_logging/ClearScenario", clear_all).kill()
 
         return data_to_write
