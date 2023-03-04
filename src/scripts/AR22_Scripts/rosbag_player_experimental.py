@@ -13,6 +13,7 @@ import sys
 import signal
 from std_msgs.msg import Bool, Float32, String, Empty
 from tf2_msgs.msg import TFMessage
+from geometry_msgs.msg import Transform, Vector3, Quaternion
 from time import sleep, time
 from rosgraph_msgs.msg import Clock
 from termios import tcflush, TCIFLUSH
@@ -54,7 +55,10 @@ class Run_Condition():
         self.tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
         self.filter_pub = rp.Publisher("/filters", FilterSwitch, queue_size=10)
         self.fake_obj_pub = rp.Publisher("/fake_object", Bool, queue_size=10)
+        self.deloc_pub = rp.Publisher("/delocalisation", Transform, queue_size=10)
+        self.deloc_tf = Transform(translation=Vector3(1.3, 0.89, 0), rotation=Quaternion(0, 0, 0.176, 0.984))
         self.pause = 1
+        self.map_name = "G10Map2xCropped"
 
     def on_press(self, key):  # The function that's called when a key is pressed
         if self.listenToKeypress == 1:
@@ -75,20 +79,27 @@ class Run_Condition():
                     tf_path.append(tf)
         self.tf_pub.publish(TFMessage(tf_path))
     
-    def publish_map(self, error):
-        print("Starting map server...")
-        map_name = "G10Map2xCropped"
-        map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + (map_name+"Delocalised.yaml" if "Localisation Error" in error else map_name+".yaml")
-        map_proc = subprocess.Popen(
-            "rosrun map_server map_server " + map_yaml,
-            shell=True,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            preexec_fn=os.setsid
-        )
-        rp.sleep(2)
-        print("Killing map server...")
-        os.killpg(os.getpgid(map_proc.pid), signal.SIGTERM)
+    def publish_delocalisation(self, error):
+
+        if "Localisation Error" in error:
+            self.deloc_pub.publish(self.deloc_tf)
+        else:
+            self.deloc_pub.publish(Transform())
+    
+    # def publish_map(self, error):
+    #     print("Starting map server...")
+    #     # map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + (self.map_name+"Delocalised.yaml" if "Localisation Error" in error else self.map_name+".yaml")
+    #     map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + self.map_name+".yaml"
+    #     map_proc = subprocess.Popen(
+    #         "rosrun map_server map_server " + map_yaml,
+    #         shell=True,
+    #         stdin=subprocess.PIPE,
+    #         stdout=subprocess.PIPE,
+    #         preexec_fn=os.setsid
+    #     )
+    #     rp.sleep(2)
+    #     print("Killing map server...")
+    #     os.killpg(os.getpgid(map_proc.pid), signal.SIGTERM)
 
     
     def signal_handler(self, sig, frame):
@@ -167,8 +178,9 @@ class Run_Condition():
 
         # Localise Jackal to origin
         print("  Localising Jackal to map origin...")
-        j = JackalSSH().send_cmd("roslaunch jackal_navigation amcl_demo.launch map_file:=/home/administrator/G10Map.yaml scan_topic:=/scan")
+        j = JackalSSH().send_cmd("roslaunch jackal_navigation my_amcl_demo.launch map_file:=/home/administrator/{}.yaml scan_topic:=/scan update_min_a:=0.1 init_a:=-1.5708".format(self.map_name))
         ssh_lst.append(j)
+        rp.sleep(0.1)
 
         # Turn on effect non-existent object in point cloud
         fake_obj = (error == "Robot Senses Non-existent Object")
@@ -178,10 +190,10 @@ class Run_Condition():
         j = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", fake_obj_str)
         ssh_lst.append(j)
 
-        # Send single point cloud frame for lidar/localisation error
-        if error == "Velodyne LIDAR Failure and Localisation Error":
-            j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleVelodyneLive.bag')
-            ssh_lst.append(j)
+        # # Send single point cloud frame for lidar/localisation error
+        # if error == "Velodyne LIDAR Failure and Localisation Error":
+        #     j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleVelodyneLive.bag')
+        #     ssh_lst.append(j)
         
         # Send single camera frame for camera failure
         if error == "Camera Sensor Failure":
@@ -193,12 +205,21 @@ class Run_Condition():
         j = JackalSSH().send_cmd('python /home/administrator/catkin_ws/src/video_logging/src/path_publisher.py ' + rosbag_name)
         ssh_lst.append(j)
 
-        # Map server
-        print("  Sending map...")
-        map_name = "G10Map2xCropped"
-        map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + (map_name+"Delocalised.yaml" if "Localisation Error" in error else map_name+".yaml")
-        j = JackalSSH().send_cmd("rosrun map_server map_server " + map_yaml)
-        ssh_lst.append(j)
+        # # Map server
+        # print("  Sending map...")
+        # # map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + (self.map_name+"Delocalised.yaml" if "Localisation Error" in error else self.map_name+".yaml")
+        # map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + self.map_name+".yaml"
+        # j = JackalSSH().send_cmd("rosrun map_server map_server " + map_yaml)
+        # ssh_lst.append(j)
+
+        # Delocalisation
+        if "Localisation Error" in error:
+            j = JackalSSH().ros_pub_msg("/delocalisation", "geometry_msgs/Transform", self.deloc_tf)
+            ssh_lst.append(j)
+        else:
+            j = JackalSSH().ros_pub_msg("/delocalisation", "geometry_msgs/Transform", Transform())
+            ssh_lst.append(j)
+        
         
         wait_seconds = 5
         print("  Allowing {} seconds...".format(wait_seconds))
@@ -212,7 +233,7 @@ class Run_Condition():
     def stop_livestream(self):
         print("  Livestream stopped")
 
-    def play_rosbag(self,error, rosbag_name):
+    def play_rosbag(self, error, rosbag_name):
 
         rospkg.RosPack().get_path('video_logging') + '/bag_files'
         
@@ -236,8 +257,9 @@ class Run_Condition():
         rosbag_player = pyrosbag.BagPlayer(rosbag_name)
         rosbag_player.play(loop=True, publish_clock=True, quiet=True)
 
-        # Start map server
-        self.publish_map(error)
+        # Set delocalisation
+        self.publish_delocalisation(error)
+
 
         return rosbag_player, clock
 

@@ -67,20 +67,20 @@ class Errors:
                         "H": "LocalisationError.bag",
                         "T": "TrainingRecording.bag",
                         "R": "Regular.bag"
-                        }
-    jackal_locations = {
-                        "A"     : "Point A (near desk)",
-                        "B"     : "Point C (middle)",
-                        "C"     : "Point A (near desk)",
-                        "D"     : "Point A (near desk)",
-                        "E"     : "Point A (near desk), slightly towards gap in barriers",
-                        "F"     : "Point C (middle)",
-                        "G"     : "Point A (near desk)",
-                        "H"     : "Point C (middle)",
-                        "T"     : "Point A (near desk)",
-                        "live"  : "Point B (map origin)",
-                        "R"     : "Origin"
     }
+    # jackal_locations = {
+    #                     "A"     : "Point A (near desk)",
+    #                     "B"     : "Point C (middle)",
+    #                     "C"     : "Point A (near desk)",
+    #                     "D"     : "Point A (near desk)",
+    #                     "E"     : "Point A (near desk), slightly towards gap in barriers",
+    #                     "F"     : "Point C (middle)",
+    #                     "G"     : "Point A (near desk)",
+    #                     "H"     : "Point C (middle)",
+    #                     "T"     : "Point A (near desk)",
+    #                     "live"  : "Point B (map origin)",
+    #                     "R"     : "Origin"
+    # }
 
 class Conditions:
     name = None
@@ -160,6 +160,11 @@ class AR_error_diagnostics:
         if self.participant_no == 0:
             self.conditions = ["1"]
             self.errors = ["R"]
+
+        # Test all errors on a single condition
+        elif self.participant_no < 0:
+            self.conditions = [str(abs(self.participant_no))]*8
+            self.errors = ["A","B","C","D","E","F","G","H"]
         
         # Regular User Study Participant
         else:
@@ -204,7 +209,7 @@ class AR_error_diagnostics:
         for err,cond in zip(self.errors,self.conditions):
             print("  {0: <17}".format(Conditions.conditions[cond]), Errors.types[err])
         print("\n")
-        workbook = MyWorkbook()
+        # workbook = MyWorkbook()
 
         input("Run through first page of instructions if not already done. Press enter to continue once completed    ")
 
