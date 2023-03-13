@@ -123,8 +123,8 @@ class MyWorkbook:
 class AR_error_diagnostics:
     def __init__(self, participant_no):
         self.participant_no = int(participant_no)
-        self.conditions = ["","","","","","","","","",""]
-        self.errors = ["","","","","","","","","",""]
+        self.conditions = [""]*8
+        self.errors = [""]*8
         self.condition_pub = rospy.Publisher("/condition", String, queue_size=10)
 
     def signal_handler(self, sig, frame):
@@ -184,7 +184,7 @@ class AR_error_diagnostics:
                     participant_row = i
             
             #Find order of conditions for current participant
-            j = 2
+            j = 0
             for i in range(2,6):
                 condition = int(pol_sheet.cell(row = participant_row, column = i).value)
                 self.conditions[j] = str(condition)
@@ -194,15 +194,18 @@ class AR_error_diagnostics:
 
 
             #Find order of errors for current participant
-            for i in range(2,10):
-                col = i+4
+            for i in range(len(self.errors)):
+                col = i+6
                 self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
             
             #Add static training scenarios to lists
-            self.errors[0] = "T"
-            self.errors[1] = "T"
-            self.conditions[0] = "1"
-            self.conditions[1] = "3"
+            self.errors = ["R","R","R","R"] + self.errors
+            self.conditions = ["3","4","1","2"] + self.conditions
+
+            # self.errors[0] = "T"
+            # self.errors[1] = "T"
+            # self.conditions[0] = "1"
+            # self.conditions[1] = "3"
 
         #Display all scenarios
         print("\nThe order of scenarios will be:")

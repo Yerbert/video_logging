@@ -19,18 +19,18 @@
     },
     {
         "bag_name": "GoalObstruction.bag",
-        "goal" :[0.5, -3.0, 0.0],
+        "goal" :[1.8, -3.5, 0.0],
         "infologs": [
             {
                 "time": 1.12,
                 "text": "[ INFO ] Navigating to Goal."
             },
             {
-                "time": 13.55,
-                "text": "[ WARN ] Obstruction in front of robot, rerouting path."
+                "time": 12.55,
+                "text": "[ WARN ] Rerouting..."
             },
             {
-                "time": 14.32,
+                "time": 13.32,
                 "text": "[ ERROR ]  Rerouting failed."
             },
             {
