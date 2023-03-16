@@ -199,7 +199,7 @@ class AR_error_diagnostics:
                 self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
             
             #Add static training scenarios to lists
-            self.errors = ["R","R","R","R"] + self.errors
+            self.errors = ["T","T","T","T"] + self.errors
             self.conditions = ["3","4","1","2"] + self.conditions
 
             # self.errors[0] = "T"
@@ -244,12 +244,13 @@ class AR_error_diagnostics:
             play_condition = rosbag_player_experimental.Run_Condition()
             data_to_write = play_condition.run_condition(Errors.rosbags[self.errors[l]],Errors.types[self.errors[l]],Conditions.conditions[self.conditions[l]])
 
-            # If not training or is ELizabeth
-            if l > 1 or self.participant_no == 0:
+            # Record stats for non-training scenarios
+            if l > 3 or self.participant_no == 0:
                 MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
                 print("Error " + str(l+1) + " completed\n\n\n")
             
-            if l == 1:
+            # End of training
+            if l == 3:
                 input("\nProvide instructions on difference between live and replay and then press enter    ")
                 print("\n\nTraining complete. About to move onto study.... \n\n")
             
