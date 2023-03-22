@@ -142,10 +142,12 @@ class AR_error_diagnostics:
         )
         # JackalSSH().ros_pub_filterswitch(filters).kill()
         j1 = JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters)
-        # Removing fake objects initially
+        # Turn fake objects and calibration features off
         print("  Disabling fake object...")
         j2 = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "false")
-        os.system("rostopic pub -1 /fake_object std_msgs/Bool false") # Cheeky lil publish
+        os.system("rostopic pub -1 /fake_object std_msgs/Bool false")
+        print("  Disabling calibration tools...")
+        os.system("rostopic pub -1 /calibration std_msgs/Bool false")
         
         # Kill ssh's
         j1.kill(4)
