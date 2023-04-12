@@ -101,6 +101,8 @@ class MyWorkbook:
         #ConfidenceTimeCol = 6
         self.dateCol = 1
         self.partIdCol = 2
+        self.confidenceCol = 8
+        self.questionCorrectCol = 9
     
         self.file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
         self.excel_filename = "data.xlsx"
@@ -108,7 +110,7 @@ class MyWorkbook:
         self.wb = load_workbook(self.fullpath)
         self.ws = self.wb.active
     
-    def write_next_row(self, participant_no, condition, error, correct_error, guessed_error, diagnosis_time):
+    def write_next_row(self, participant_no, condition, error, correct_error, guessed_error, diagnosis_time, confidence, question_correct):
         row = self.ws.max_row + 1
         self.ws.cell(row=row, column=self.dateCol).value = datetime.now()
         self.ws.cell(row=row, column=self.partIdCol).value = participant_no
@@ -117,6 +119,8 @@ class MyWorkbook:
         self.ws.cell(row=row, column=self.correctErrorCol).value = correct_error
         self.ws.cell(row=row, column=self.guessedErrorCol).value = guessed_error
         self.ws.cell(row=row, column=self.diagnoseTimeCol).value = diagnosis_time
+        self.ws.cell(row=row, column=self.confidenceCol).value = confidence
+        self.ws.cell(row=row, column=self.questionCorrectCol).value = question_correct
         self.wb.save(self.fullpath)
 
 
@@ -200,14 +204,10 @@ class AR_error_diagnostics:
                 col = i+6
                 self.errors[i] = pol_sheet.cell(row = participant_row, column = col).value
             
-            #Add static training scenarios to lists
+            #Prepend static training scenarios to lists
             self.errors = ["T","T","T","T"] + self.errors
             self.conditions = ["3","4","1","2"] + self.conditions
 
-            # self.errors[0] = "T"
-            # self.errors[1] = "T"
-            # self.conditions[0] = "1"
-            # self.conditions[1] = "3"
 
         #Display all scenarios
         print("\nThe order of scenarios will be:")
@@ -248,7 +248,7 @@ class AR_error_diagnostics:
 
             # Record stats for non-training scenarios
             if l > 3 or self.participant_no == 0:
-                MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2])
+                MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2],data_to_write[3],data_to_write[4])
                 print("Error " + str(l+1) + " completed\n\n\n")
             
             # End of training
@@ -261,7 +261,7 @@ class AR_error_diagnostics:
 
     def configure_device_connections(self, new_condition, rosbag_name):
 
-        sleep_seconds = 6
+        sleep_seconds = 4
         print("\n  Signalling devices to configure connections...")
         
         self.condition_pub.publish(String(new_condition))

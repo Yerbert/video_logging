@@ -126,9 +126,11 @@ class Run_Condition():
             rosbag_player, clock = self.play_rosbag(error, rosbag_name)
             data_to_write = self.record_data(error, condition)
             self.stop_rosbag(rosbag_player, clock)
-        
+
+
         # End of scenario...
 
+        ssh_lst = []
         print("  Blocking data stream (enabling filters)...")
         # Block all data
         filters = FilterSwitch(
@@ -136,18 +138,29 @@ class Run_Condition():
             camera_blocked=True
         )
         self.filter_pub.publish(filters)
-        JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters).kill()
+        j = JackalSSH().ros_pub_msg("/filters", "video_logging/FilterSwitch", filters)
+        ssh_lst.append(j)
 
         # Clear fake object
         print("  Clearing fake object...")
         self.fake_obj_pub.publish(Bool(False))
-        JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "false").kill()
+        j = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "false")
+        ssh_lst.append(j)
 
         print("  Clearing scenario...")
         # Clear scenario
         clear_all = ClearScenario(True, True, True, True)
         self.clear_scenario_pub.publish(clear_all)
-        JackalSSH().ros_pub_msg("/clear_scenario", "video_logging/ClearScenario", clear_all).kill()
+        j = JackalSSH().ros_pub_msg("/clear_scenario", "video_logging/ClearScenario", clear_all)
+        ssh_lst.append(j)
+
+        wait_seconds = 5
+        print("  Allowing {} seconds...".format(wait_seconds))
+        rp.sleep(wait_seconds)
+        
+        # Kill ssh's
+        for ssh in ssh_lst:
+            ssh.kill(0)
 
         return data_to_write
 
@@ -296,7 +309,7 @@ class Run_Condition():
 
             #Did participant get the correct error/s?
             rp.sleep(0.5)
-            correct_error = input("Did participant get the correct error/s? Y/N:  ")
+            correct_error = input("Did participant guess the correct error/s? (Y/N):  ")
             cont = 0
             if correct_error == "Y" or correct_error == "N":
                 cont = 1
@@ -309,6 +322,33 @@ class Run_Condition():
             else:
                 errors_guessed = error
 
+            # Record confidence
+            rp.sleep(0.5)
+            confidence = input("How confident? (give a percentage):  ")
+            cont = 0
+            while cont == 0:
+                try:
+                    co = int(confidence)
+                    assert 0 <= co <= 100
+                except:
+                    confidence = input("Error. Invalid Input. Please enter a percentage between 0 and 100: ")
+                else:
+                    cont = 1
+            
+            # Question answered correctly
+
+            correct_qn = "n/a"
+            if error in ["Flat tyre", "Dropped Payload"]:
+                rp.sleep(0.5)
+                correct_qn = input("Did participant answer the follow-up question correctly? (Y/N):  ")
+                cont = 0
+                if correct_qn == "Y" or correct_qn == "N":
+                    cont = 1
+                while cont == 0:
+                    correct_qn = input("Error. Invalid Input. Please enter Y or N:  ")
+                    if correct_qn == "Y" or correct_qn == "N":
+                        cont = 1
+            
             #Wait for participant to respond to second question
             #response = input("Press enter when participant has told you their confidence ")
             #current_time = time()
@@ -323,7 +363,7 @@ class Run_Condition():
             response = input("\nPress enter when participant has responded to all follow up questions:  ")
 
             #Return data
-            data_to_write = [correct_error, errors_guessed, Timer.diagnoseTime]
+            data_to_write = [correct_error, errors_guessed, Timer.diagnoseTime, confidence, correct_qn]
         return data_to_write
 
     
