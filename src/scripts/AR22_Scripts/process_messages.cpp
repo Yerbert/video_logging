@@ -12,6 +12,8 @@
 #include <iostream>
 #include <math.h>
 #include <queue>
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
 
 #include <tf2_msgs/TFMessage.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -102,7 +104,8 @@ StutterFilter camera_flicker(1);
 BlockFilter camera_blocked;
 StutterFilter velodyne_flicker(1);
 BlockFilter velodyne_blocked;
-bool non_existent_object = true;
+bool non_existent_object = false;
+bool camera_smudge = false;
 
 bool is_acceptable_point(const pcl::PointXYZ& point)
 {
@@ -261,6 +264,18 @@ void video_callback(const sensor_msgs::CompressedImageConstPtr& video_msg)
 		return;
 	}
 
+	if (camera_smudge) {
+		cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(video_msg, sensor_msgs::image_encodings::BGR8);
+		cv::Mat img2;
+		//						  Centre			  Radius	Colour			   	Thickness
+		cv::circle(cv_ptr->image, cv::Point(600,350), 10, 		cv::Scalar(0,0,0), 	300);
+		cv::circle(cv_ptr->image, cv::Point(450,600), 10, 		cv::Scalar(0,0,0), 	600);
+		cv::GaussianBlur(cv_ptr->image, img2, cv::Size(81,81), 0, 0, 0);
+		cv_ptr->image = img2;
+		video_pub.publish(cv_ptr->toCompressedImageMsg());
+		return;
+	}
+
 	video_pub.publish(video_msg);
 }
 
@@ -276,6 +291,10 @@ void fakeobj_callback(const std_msgs::BoolConstPtr& msg)
 	non_existent_object = msg->data;
 }
 
+void camera_smudge_callback(const std_msgs::BoolConstPtr& msg)
+{
+	camera_smudge = msg->data;
+}
 
 
 int main(int argc, char** argv)
@@ -296,6 +315,7 @@ int main(int argc, char** argv)
 	std::string clear_outtopic = "/clear_scenario";
 	std::string filter_intopic = "/filters";
 	std::string fakeobj_intopic = "/fake_object";
+	std::string camera_smudge_intopic = "/camera_smudge";
 
 	// Point cloud
 	pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>(pointcloud_outtopic, 1);
@@ -320,6 +340,9 @@ int main(int argc, char** argv)
 
 	// Fake object
 	ros::Subscriber fakeobj_sub = nh.subscribe(fakeobj_intopic, 1, fakeobj_callback);
+
+	// Camera Smudge
+	ros::Subscriber camera_smudge_sub = nh.subscribe(camera_smudge_intopic, 1, camera_smudge_callback);
 
 	ros::spin();
 
