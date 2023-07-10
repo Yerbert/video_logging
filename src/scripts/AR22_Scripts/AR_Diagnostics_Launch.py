@@ -45,6 +45,34 @@ class Color:
 class Errors:
     name = None
     types = {
+                        "A": "Motor Issue",
+                        "B": "Camera Smudge",
+                        "C": "LaserScanner Issue (Fake Obstruction)",
+                        "D": "Localisation Issue",
+                        "E": "Dropped Payload",
+                        "F": "Camera Issue",
+                        "G": "Obstruction in Robot's Path",
+                        "H": "LaserScanner Flicker",
+                        "T": "Training Scenario",
+                        "R": "Regular"
+    }
+    rosbags = {
+                        "A": "MotorIssue.bag",
+                        "B": "CameraSmudge.bag",
+                        "C": "FakeObstruction.bag",
+                        "D": "Regular.bag",
+                        "E": "DroppedPayload.bag",
+                        "F": "CameraFailure.bag",
+                        "G": "GoalObstruction.bag",
+                        "H": "VelodyneError.bag",
+                        "T": "TrainingRecording.bag",
+                        "R": "Regular.bag"
+    }
+
+
+"""
+# Prior to 10/07/23
+    types = {
                         "A": "Flat tyre",
                         "B": "Motor Failure",
                         "C": "Camera Sensor Failure",
@@ -68,19 +96,7 @@ class Errors:
                         "T": "TrainingRecording.bag",
                         "R": "Regular.bag"
     }
-    # jackal_locations = {
-    #                     "A"     : "Point A (near desk)",
-    #                     "B"     : "Point C (middle)",
-    #                     "C"     : "Point A (near desk)",
-    #                     "D"     : "Point A (near desk)",
-    #                     "E"     : "Point A (near desk), slightly towards gap in barriers",
-    #                     "F"     : "Point C (middle)",
-    #                     "G"     : "Point A (near desk)",
-    #                     "H"     : "Point C (middle)",
-    #                     "T"     : "Point A (near desk)",
-    #                     "live"  : "Point B (map origin)",
-    #                     "R"     : "Origin"
-    # }
+"""
 
 class Conditions:
     name = None

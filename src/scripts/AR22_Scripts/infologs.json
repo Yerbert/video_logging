@@ -98,6 +98,28 @@
         ]
     },
     {
+        "bag_name": "MotorIssue.bag",
+        "goal" :[0.4, -2.0, 0.0],
+        "infologs": [
+            {
+                "time": 0.87,
+                "text": "[ INFO ] Navigating to Goal."
+            },
+            {
+                "time": 4.61,
+                "text": "[ WARN ] Veered off course. Correcting..."
+            },
+            {
+                "time": 10.64,
+                "text": "[ WARN ] Veered off course. Correcting..."
+            },
+            {
+                "time": 17.0,
+                "text": "[ INFO ] Successfully navigating to Goal."
+            }
+        ]
+    },
+    {
         "bag_name": "MotorFailure.bag",
         "goal" :[0.4, -2.0, 0.0],
         "infologs": [

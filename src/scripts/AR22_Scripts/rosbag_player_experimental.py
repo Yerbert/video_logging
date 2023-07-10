@@ -55,8 +55,9 @@ class Run_Condition():
         self.tf_pub = rp.Publisher("/tf_path", TFMessage, queue_size=10)
         self.filter_pub = rp.Publisher("/filters", FilterSwitch, queue_size=10)
         self.fake_obj_pub = rp.Publisher("/fake_object", Bool, queue_size=10)
+        self.camera_smudge_pub = rp.Publisher("/camera_smudge", Bool, queue_size=10)
         self.deloc_pub = rp.Publisher("/delocalisation", Transform, queue_size=10)
-        self.deloc_tf = Transform(translation=Vector3(1.3, 0.89, 0), rotation=Quaternion(0, 0, 0.176, 0.984))
+        self.deloc_tf = Transform(translation=Vector3(0.5, 0.2, 0), rotation=Quaternion(0, 0, 0, 1))
         self.pause = 1
         self.map_name = "G10Map2xCropped"
 
@@ -80,12 +81,17 @@ class Run_Condition():
         self.tf_pub.publish(TFMessage(tf_path))
     
     def publish_delocalisation(self, error):
-
-        if "Localisation Error" in error:
+        if "localisation" in error.lower():
             self.deloc_pub.publish(self.deloc_tf)
         else:
             self.deloc_pub.publish(Transform())
     
+    def publish_camera_smudge(self, error):
+        if "smudge" in error.lower():
+            self.camera_smudge_pub.publish(Bool(True))
+        else:
+            self.camera_smudge_pub.publish(Bool(False))
+
     # def publish_map(self, error):
     #     print("Starting map server...")
     #     # map_yaml = rospkg.RosPack().get_path('video_logging') + "/maps/" + (self.map_name+"Delocalised.yaml" if "Localisation Error" in error else self.map_name+".yaml")
@@ -147,8 +153,14 @@ class Run_Condition():
         j = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", "false")
         ssh_lst.append(j)
 
-        print("  Clearing scenario...")
+        # Clear camera smudge
+        print("  Clearing camera smudge...")
+        self.camera_smudge_pub.publish(Bool(False))
+        j = JackalSSH().ros_pub("/camera_smudge", "std_msgs/Bool", "false")
+        ssh_lst.append(j)
+
         # Clear scenario
+        print("  Clearing scenario...")
         clear_all = ClearScenario(True, True, True, True)
         self.clear_scenario_pub.publish(clear_all)
         j = JackalSSH().ros_pub_msg("/clear_scenario", "video_logging/ClearScenario", clear_all)
@@ -173,10 +185,10 @@ class Run_Condition():
         print("\n  Livestream started.")
         print("  Setting filters...")
         filters = FilterSwitch(
-            velodyne_flicker = error in ["Velodyne LIDAR Failure"],
-            velodyne_blocked = error in ["Velodyne LIDAR Failure and Localisation Error"],
+            velodyne_flicker = error in ["LaserScanner Flicker"],
+            velodyne_blocked = error in [],
             camera_flicker   = error in [],
-            camera_blocked   = error in ["Camera Sensor Failure"]
+            camera_blocked   = error in ["Camera Issue"]
         )
         self.filter_pub.publish(filters)
 
@@ -196,11 +208,17 @@ class Run_Condition():
         rp.sleep(0.1)
 
         # Turn on effect non-existent object in point cloud
-        fake_obj = (error == "Robot Senses Non-existent Object")
-        fake_obj_str = str(fake_obj).lower()
+        fake_obj = (error == "LaserScanner Issue (Fake Obstruction)")
+        fake_obj_str = str(fake_obj).lower()    # bool to string
         print("  Setting fake object effect in point cloud to {}".format(fake_obj_str))
-        # self.fake_obj_pub.publish(Bool(fake_obj))
         j = JackalSSH().ros_pub("/fake_object", "std_msgs/Bool", fake_obj_str)
+        ssh_lst.append(j)
+
+        # Turn on camera smudge
+        camera_smudge = ("smudge" in error.lower())
+        camera_smudge_str = str(camera_smudge).lower()    # bool to string
+        print("  Setting camera smudge effect to {}".format(camera_smudge_str))
+        j = JackalSSH().ros_pub("/camera_smudge", "std_msgs/Bool", camera_smudge_str)
         ssh_lst.append(j)
 
         # # Send single point cloud frame for lidar/localisation error
@@ -209,7 +227,7 @@ class Run_Condition():
         #     ssh_lst.append(j)
         
         # Send single camera frame for camera failure
-        if error == "Camera Sensor Failure":
+        if error == "Camera Issue":
             j = JackalSSH().send_cmd('rosbag play /home/administrator/catkin_ws/src/video_logging/src/SingleCameraLive.bag')
             ssh_lst.append(j)
         
@@ -226,7 +244,7 @@ class Run_Condition():
         # ssh_lst.append(j)
 
         # Delocalisation
-        if "Localisation Error" in error:
+        if "localisation" in error.lower():
             j = JackalSSH().ros_pub_msg("/delocalisation", "geometry_msgs/Transform", self.deloc_tf)
             ssh_lst.append(j)
         else:
@@ -273,6 +291,8 @@ class Run_Condition():
         # Set delocalisation
         self.publish_delocalisation(error)
 
+        # Set camera smudge
+        self.publish_camera_smudge(error)
 
         return rosbag_player, clock
 
