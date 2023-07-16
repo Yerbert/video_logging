@@ -268,8 +268,8 @@ void video_callback(const sensor_msgs::CompressedImageConstPtr& video_msg)
 		cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(video_msg, sensor_msgs::image_encodings::BGR8);
 		cv::Mat img2;
 		//						  Centre			  Radius	Colour			   	Thickness
-		cv::circle(cv_ptr->image, cv::Point(600,350), 10, 		cv::Scalar(0,0,0), 	300);
-		cv::circle(cv_ptr->image, cv::Point(450,600), 10, 		cv::Scalar(0,0,0), 	600);
+		cv::circle(cv_ptr->image, cv::Point(600,480), 10, 		cv::Scalar(0,0,0), 	300);
+		cv::circle(cv_ptr->image, cv::Point(450,720), 10, 		cv::Scalar(0,0,0), 	600);
 		cv::GaussianBlur(cv_ptr->image, img2, cv::Size(81,81), 0, 0, 0);
 		cv_ptr->image = img2;
 		video_pub.publish(cv_ptr->toCompressedImageMsg());
