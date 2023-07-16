@@ -197,9 +197,9 @@ pcl::PointXYZ create_fake_point() {
 	float centre_z = 0;
 	float numPoints = 100;
 
-	float x = centre_x + ( ( ((float)(std::rand() % 200)) - 100) / 300);
-	float y = centre_y + ( ( ((float)(std::rand() % 200)) - 100) / 300);
-	float z = centre_z + ( ( ((float)(std::rand() % 200)) - 100) / 300);
+	float x = centre_x + ( ( ((float)(std::rand() % 500)) - 200) / 200);
+	float y = centre_y + ( ( ((float)(std::rand() % 200)) - 100) / 200);
+	float z = centre_z + ( ( ((float)(std::rand() % 200)) - 100) / 200);
 	pcl::PointXYZ new_point(x,y,z);
 	return new_point;
 }
@@ -241,7 +241,7 @@ void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 	}
 
 	if (non_existent_object) {
-		for(int i=0; i<100; i++) {
+		for(int i=0; i<250; i++) {
 			new_cloud.points.push_back(create_fake_point());
 		}
 	}

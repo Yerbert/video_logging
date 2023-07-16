@@ -8,10 +8,6 @@
                 "text": "[ INFO ] Navigating to Goal."
             },
             {
-                "time": 7.31,
-                "text": "[ WARN ] Imminent impact, executing emergency manoeuvre."
-            },
-            {
                 "time": 16.52,
                 "text": "[ INFO ] Successfully navigating to Goal."
             }
@@ -26,12 +22,12 @@
                 "text": "[ INFO ] Navigating to Goal."
             },
             {
-                "time": 12.55,
-                "text": "[ WARN ] Rerouting..."
+                "time": 12.5,
+                "text": "[ WARN ] Partial obstruction (Est. 2m ahead). Rerouting..."
             },
             {
                 "time": 13.32,
-                "text": "[ ERROR ]  Rerouting failed."
+                "text": "[ ERROR ] Rerouting failed."
             },
             {
                 "time": 14.71,
@@ -49,7 +45,7 @@
             },
             {
                 "time": 12.09,
-                "text": "[ WARN ] Obstruction in front of robot, rerouting path."
+                "text": "[ WARN ] Partial obstruction (Est. 1m ahead). Rerouting..."
             },
             {
                 "time": 13.75,
@@ -76,30 +72,22 @@
         ]
     },
     {
-        "bag_name": "LocalisationError.bag",
+        "bag_name": "LocalisationIssue.bag",
         "goal" :[0.0, 0.0, 0.0],
         "infologs": [
             {
-                "time": 1.09,
+                "time": 0.99,
                 "text": "[ INFO ] Navigating to Goal."
             },
             {
-                "time": 11.59,
-                "text": "[ INFO ] Rerouting path."
-            },
-            {
-                "time": 12.51,
-                "text": "[ ERROR ]  Rerouting failed."
-            },
-            {
-                "time": 14.11,
-                "text": "[ ERROR ] Failed to navigate to Goal."
+                "time": 16.52,
+                "text": "[ INFO ] Successfully navigating to Goal."
             }
         ]
     },
     {
         "bag_name": "MotorIssue.bag",
-        "goal" :[0.4, -2.0, 0.0],
+        "goal" :[0.0, 0.0, 0.0],
         "infologs": [
             {
                 "time": 0.87,
@@ -176,6 +164,28 @@
             {
                 "time": 14.38,
                 "text": "[ INFO ] Successfully navigating to Goal."
+            }
+        ]
+    },
+    {
+        "bag_name": "CameraSmudge.bag",
+        "goal" :[0.0, 0.0, 0.0],
+        "infologs": [
+            {
+                "time": 6.51,
+                "text": "[ WARN ] Partial obstruction (Est. 1m ahead). Rerouting..."
+            },
+            {
+                "time": 7.07,
+                "text": "[ INFO ] Rerouting successful."
+            },
+            {
+                "time": 12.92,
+                "text": "[ WARN ] Partial obstruction (Est. 1m ahead). Rerouting..."
+            },
+            {
+                "time": 14.71,
+                "text": "[ ERROR ] Failed to navigate to Goal."
             }
         ]
     },

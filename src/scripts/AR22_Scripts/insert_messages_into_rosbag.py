@@ -105,6 +105,9 @@ def insert_start_message(bag_name):
 
 if __name__ == "__main__":
 
+    # If editting a previously editted rosbag, remove infologs and goal message by running:
+    # rosbag filter OldBag.bag NewBag.bag "topic != '/goal' and topic != '/infologs' and topic != '/infologs/activate' and topic != '/infologs/start'"
+
     bag_name = sys.argv[1]
     new_bag_name = bag_name[:-4] + "_with_infologs.bag"
     shutil.copyfile(bag_name, new_bag_name)

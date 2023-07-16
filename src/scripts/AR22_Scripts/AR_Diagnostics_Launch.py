@@ -60,7 +60,7 @@ class Errors:
                         "A": "MotorIssue.bag",
                         "B": "CameraSmudge.bag",
                         "C": "FakeObstruction.bag",
-                        "D": "Regular.bag",
+                        "D": "LocalisationIssue.bag",
                         "E": "DroppedPayload.bag",
                         "F": "CameraFailure.bag",
                         "G": "GoalObstruction.bag",
