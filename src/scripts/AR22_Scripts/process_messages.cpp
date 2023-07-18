@@ -91,7 +91,7 @@ class BlockFilter : public Filter
 };
 
 
-int pointcloud_downsample = 1; // downsample factor. 1 = no downsampling
+int pointcloud_downsample = 1; // pointcloud frame downsample factor. 1 = no downsampling
 int pointcloud_counter = 0;
 int video_downsample = 2;
 int video_counter = 0;
@@ -241,7 +241,7 @@ void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 	}
 
 	if (non_existent_object) {
-		for(int i=0; i<250; i++) {
+		for(int i=0; i<500; i++) {
 			new_cloud.points.push_back(create_fake_point());
 		}
 	}

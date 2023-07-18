@@ -24,9 +24,7 @@ from JackalSSH import JackalSSH
 class Timer:
     start = 0
     diagnoseTime = 0
-    ConfidencePercentageResponseTime = 0
-    ConfidenceExplanationTime = 0
-    total = 0
+    followupQnTime = 0
 
 class ProgressClock():
     def __init__(self, rosbag_name):
@@ -57,7 +55,7 @@ class Run_Condition():
         self.fake_obj_pub = rp.Publisher("/fake_object", Bool, queue_size=10)
         self.camera_smudge_pub = rp.Publisher("/camera_smudge", Bool, queue_size=10)
         self.deloc_pub = rp.Publisher("/delocalisation", Transform, queue_size=10)
-        self.deloc_tf = Transform(translation=Vector3(0.5, 0.2, 0), rotation=Quaternion(0, 0, 0, 1))
+        self.deloc_tf = Transform(translation=Vector3(0.5, 0.5, 0), rotation=Quaternion(0, 0, 0, 1))
         self.pause = 1
         self.map_name = "G10Map2xCropped"
 
@@ -166,7 +164,7 @@ class Run_Condition():
         j = JackalSSH().ros_pub_msg("/clear_scenario", "video_logging/ClearScenario", clear_all)
         ssh_lst.append(j)
 
-        wait_seconds = 5
+        wait_seconds = 4
         print("  Allowing {} seconds...".format(wait_seconds))
         rp.sleep(wait_seconds)
         
@@ -251,8 +249,11 @@ class Run_Condition():
             j = JackalSSH().ros_pub_msg("/delocalisation", "geometry_msgs/Transform", Transform())
             ssh_lst.append(j)
         
+        #Start timer
+        Timer.start = time()
+        rp.sleep(1.)
         
-        wait_seconds = 5
+        wait_seconds = 4
         print("  Allowing {} seconds...".format(wait_seconds))
         rp.sleep(wait_seconds)
         
@@ -294,6 +295,10 @@ class Run_Condition():
         # Set camera smudge
         self.publish_camera_smudge(error)
 
+        #Start timer
+        Timer.start = time()
+        rp.sleep(1.)
+
         return rosbag_player, clock
 
     def stop_rosbag(self,rosbag_player,clock):
@@ -305,7 +310,7 @@ class Run_Condition():
         clock.finishPlayback()
 
     def record_data(self,error,condition):
-        #Start timer
+        
         if error == "Training Scenario":
             rp.sleep(1.)
             splitCondition = condition.split(" + ")
@@ -316,8 +321,8 @@ class Run_Condition():
             input("\nProvide participant with instructions on how to use the " + device + " and then press enter     ")
             data_to_write = ["training", "training", "training"]
         else:
-            Timer.start = time()
-            rp.sleep(1.)
+
+            # Timer is started in previous function
             
             wait = input("\nPress enter when participant provides their diagnosis")
             
@@ -355,10 +360,21 @@ class Run_Condition():
                 else:
                     cont = 1
             
+            #Wait for participant to respond to follow up questions
+            
+            Timer.start = time()
+            rp.sleep(1.)
+            
+            response = input("\nPress enter when participant has responded to all follow up questions:  ")
+            
+            current_time = time()
+            Timer.followupQnTime = current_time - Timer.start
+
+            
             # Question answered correctly
 
             correct_qn = "n/a"
-            if error in ["Flat tyre", "Dropped Payload"]:
+            if error in ["Dropped Payload"]:
                 rp.sleep(0.5)
                 correct_qn = input("Did participant answer the follow-up question correctly? (Y/N):  ")
                 cont = 0
@@ -379,11 +395,10 @@ class Run_Condition():
             #current_time = time()
             #Timer.ConfidenceExplanationTime = current_time - Timer.start
 
-            #Wait for participant to respond to follow up questions
-            response = input("\nPress enter when participant has responded to all follow up questions:  ")
+            
 
             #Return data
-            data_to_write = [correct_error, errors_guessed, Timer.diagnoseTime, confidence, correct_qn]
+            data_to_write = [correct_error, errors_guessed, Timer.diagnoseTime, confidence, correct_qn, Timer.followupQnTime]
         return data_to_write
 
     

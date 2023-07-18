@@ -11,9 +11,12 @@ Always call the .kill() method when you no longer need it.
 """
 
 class JackalSSH:
+
+    JACKAL_IP = '192.168.11.12'
+
     def __init__(self):
         self.process = subprocess.Popen(
-            "sshpass -p clearpath ssh -tt administrator@160.69.69.100\n",
+            "sshpass -p clearpath ssh -tt administrator@{}\n".format(JackalSSH.JACKAL_IP),
             shell=True,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,

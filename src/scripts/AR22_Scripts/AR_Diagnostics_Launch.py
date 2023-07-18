@@ -119,6 +119,7 @@ class MyWorkbook:
         self.partIdCol = 2
         self.confidenceCol = 8
         self.questionCorrectCol = 9
+        self.followupQnTimeCol = 10
     
         self.file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
         self.excel_filename = "data.xlsx"
@@ -126,7 +127,7 @@ class MyWorkbook:
         self.wb = load_workbook(self.fullpath)
         self.ws = self.wb.active
     
-    def write_next_row(self, participant_no, condition, error, correct_error, guessed_error, diagnosis_time, confidence, question_correct):
+    def write_next_row(self, participant_no, condition, error, correct_error, guessed_error, diagnosis_time, confidence, question_correct, followup_qn_time):
         row = self.ws.max_row + 1
         self.ws.cell(row=row, column=self.dateCol).value = datetime.now()
         self.ws.cell(row=row, column=self.partIdCol).value = participant_no
@@ -137,6 +138,7 @@ class MyWorkbook:
         self.ws.cell(row=row, column=self.diagnoseTimeCol).value = diagnosis_time
         self.ws.cell(row=row, column=self.confidenceCol).value = confidence
         self.ws.cell(row=row, column=self.questionCorrectCol).value = question_correct
+        self.ws.cell(row=row, column=self.followupQnTimeCol).value = followup_qn_time
         self.wb.save(self.fullpath)
 
 
@@ -237,7 +239,7 @@ class AR_error_diagnostics:
         #Go through each error
         for l, error in enumerate(self.errors):
             #Print error information here
-            print("\nThe error will be " + Color.BOLD + Color.CYAN + Errors.types[self.errors[l]] + Color.END)
+            print("\n"+ str(max(0,l+1-4)) +". The error will be " + Color.BOLD + Color.CYAN + Errors.types[self.errors[l]] + Color.END)
             #Print condition for operator to know which method is being used
             print("The condition required for this error is " + Color.BOLD + Color.RED + Conditions.conditions[self.conditions[l]] + Color.END)
             cont = input("Do you want to perform this Error/condition? (Y/N)  ")
@@ -264,9 +266,15 @@ class AR_error_diagnostics:
 
             # Record stats for non-training scenarios
             if l > 3 or self.participant_no == 0:
-                MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2],data_to_write[3],data_to_write[4])
-                print("Error " + str(l+1) + " completed\n\n\n")
+                # MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]],data_to_write[0],data_to_write[1],data_to_write[2],data_to_write[3],data_to_write[4])
+                MyWorkbook().write_next_row(participant_no,Conditions.conditions[self.conditions[l]],Errors.types[self.errors[l]], *data_to_write)
+                print("Error " + str(max(0,l+1-4)) + " completed\n\n\n")
             
+            # Prompt experimentor to get user to do post-condition survey
+            if l > 4 and (self.conditions[l] == self.conditions[l-1]):
+                print("\n\nUSER NOW DOES POST-CONDITION SURVEY\n\n")
+                rospy.sleep(5.)
+
             # End of training
             if l == 3:
                 input("\nProvide instructions on difference between live and replay and then press enter    ")
