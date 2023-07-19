@@ -24,7 +24,8 @@ from JackalSSH import JackalSSH
 class Timer:
     start = 0
     diagnoseTime = 0
-    followupQnTime = 0
+    followupQn1Time = 0
+    followupQn2Time = 0
 
 class ProgressClock():
     def __init__(self, rosbag_name):
@@ -360,23 +361,36 @@ class Run_Condition():
                 else:
                     cont = 1
             
-            #Wait for participant to respond to follow up questions
+
+            # Wait for participant to respond to follow up questions
             
+            # First
+
             Timer.start = time()
-            rp.sleep(1.)
             
-            response = input("\nPress enter when participant has responded to all follow up questions:  ")
+            response = input("\nPress enter when participant has answered FIRST follow up question:  ")
             
             current_time = time()
-            Timer.followupQnTime = current_time - Timer.start
+            Timer.followupQn1Time = current_time - Timer.start
+
+            # Second
+
+            Timer.start = time()
+            
+            response = input("\nPress enter when participant has answered SECOND follow up question:  ")
+            
+            current_time = time()
+            Timer.followupQn2Time = current_time - Timer.start
+
+            
 
             
             # Question answered correctly
 
             correct_qn = "n/a"
-            if error in ["Dropped Payload"]:
+            if error in ["Dropped Payload", "Obstruction in Robot's Path"]:
                 rp.sleep(0.5)
-                correct_qn = input("Did participant answer the follow-up question correctly? (Y/N):  ")
+                correct_qn = input("\nDid the participant answer the follow-up question correctly? (Y/N):  ")
                 cont = 0
                 if correct_qn == "Y" or correct_qn == "N":
                     cont = 1
@@ -398,7 +412,7 @@ class Run_Condition():
             
 
             #Return data
-            data_to_write = [correct_error, errors_guessed, Timer.diagnoseTime, confidence, correct_qn, Timer.followupQnTime]
+            data_to_write = [correct_error, errors_guessed, round(Timer.diagnoseTime,3), confidence, correct_qn, round(Timer.followupQn1Time,3), round(Timer.followupQn2Time,3)]
         return data_to_write
 
     

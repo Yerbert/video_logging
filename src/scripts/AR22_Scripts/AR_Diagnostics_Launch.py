@@ -119,7 +119,8 @@ class MyWorkbook:
         self.partIdCol = 2
         self.confidenceCol = 8
         self.questionCorrectCol = 9
-        self.followupQnTimeCol = 10
+        self.followupQn1TimeCol = 10
+        self.followupQn2TimeCol = 11
     
         self.file_path = rospkg.RosPack().get_path('video_logging') + '/Sheets'
         self.excel_filename = "data.xlsx"
@@ -127,7 +128,7 @@ class MyWorkbook:
         self.wb = load_workbook(self.fullpath)
         self.ws = self.wb.active
     
-    def write_next_row(self, participant_no, condition, error, correct_error, guessed_error, diagnosis_time, confidence, question_correct, followup_qn_time):
+    def write_next_row(self, participant_no, condition, error, correct_error, guessed_error, diagnosis_time, confidence, question_correct, followup_qn_1_time, followup_qn_2_time):
         row = self.ws.max_row + 1
         self.ws.cell(row=row, column=self.dateCol).value = datetime.now()
         self.ws.cell(row=row, column=self.partIdCol).value = participant_no
@@ -138,7 +139,8 @@ class MyWorkbook:
         self.ws.cell(row=row, column=self.diagnoseTimeCol).value = diagnosis_time
         self.ws.cell(row=row, column=self.confidenceCol).value = confidence
         self.ws.cell(row=row, column=self.questionCorrectCol).value = question_correct
-        self.ws.cell(row=row, column=self.followupQnTimeCol).value = followup_qn_time
+        self.ws.cell(row=row, column=self.followupQn1TimeCol).value = followup_qn_1_time
+        self.ws.cell(row=row, column=self.followupQn2TimeCol).value = followup_qn_2_time
         self.wb.save(self.fullpath)
 
 
@@ -197,14 +199,14 @@ class AR_error_diagnostics:
             pol_filename = "pol.xlsx"
             pol_wb = load_workbook(os.path.join(pol_file_path, pol_filename))
             pol_sheet = pol_wb.active
-            pol_rows = 31
+            pol_rows = 33
             pol_columns = pol_sheet.max_column
             participant_row = 0
 
             #Find row relating to current participant
             for i in range(2,pol_rows):
                 number = int(pol_sheet.cell(row = i, column = 1).value)
-                if number == self.participant_no:
+                if (number%32) == self.participant_no:
                     participant_row = i
             
             #Find order of conditions for current participant
@@ -272,15 +274,15 @@ class AR_error_diagnostics:
             
             # Prompt experimentor to get user to do post-condition survey
             if l > 4 and (self.conditions[l] == self.conditions[l-1]):
-                print("\n\nUSER NOW DOES POST-CONDITION SURVEY\n\n")
-                rospy.sleep(5.)
+                wait = input("\n\nUSER NOW DOES POST-CONDITION SURVEY")
+                print("\n")
 
             # End of training
             if l == 3:
                 input("\nProvide instructions on difference between live and replay and then press enter    ")
                 print("\n\nTraining complete. About to move onto study.... \n\n")
             
-        print("All error conditions complete, exiting...\n\n")
+        print("All error conditions complete, exiting...\n\nUSER NOW DOES END-OF-STUDY SURVEY\n")
     
 
     def configure_device_connections(self, new_condition, rosbag_name):
