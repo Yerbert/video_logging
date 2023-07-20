@@ -6,6 +6,7 @@
 #include <sensor_msgs/CompressedImage.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/String.h>
 #include <video_logging/FilterSwitch.h>
 #include <video_logging/ClearScenario.h>
 
@@ -296,6 +297,23 @@ void camera_smudge_callback(const std_msgs::BoolConstPtr& msg)
 	camera_smudge = msg->data;
 }
 
+void condition_callback(const std_msgs::StringConstPtr& msg)
+{
+	if (msg->data == "Tablet + replay") {
+		if (pointcloud_downsample == 1) {
+			std::cout << "Tablet replay, switching to downsampled datastream\n";
+		}
+		pointcloud_downsample = 3;
+		video_downsample = 3;
+	} else {
+		if (pointcloud_downsample == 3) {
+			std::cout << "Switching back to non-downsampled datastream\n";
+		}
+		pointcloud_downsample = 1;
+		video_downsample = 1;
+	}
+}
+
 
 int main(int argc, char** argv)
 {
@@ -317,6 +335,9 @@ int main(int argc, char** argv)
 	std::string fakeobj_intopic = "/fake_object";
 	std::string camera_smudge_intopic = "/camera_smudge";
 
+	std::string condition_topic = "/condition";
+
+	
 	// Point cloud
 	pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>(pointcloud_outtopic, 1);
 	ros::Subscriber pointcloud_sub = nh.subscribe(pointcloud_intopic, 1, pointcloud_callback);
@@ -343,6 +364,9 @@ int main(int argc, char** argv)
 
 	// Camera Smudge
 	ros::Subscriber camera_smudge_sub = nh.subscribe(camera_smudge_intopic, 1, camera_smudge_callback);
+
+	// Condition
+	ros::Subscriber condition_sub = nh.subscribe(condition_topic, 1, condition_callback);
 
 	ros::spin();
 

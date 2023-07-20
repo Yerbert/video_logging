@@ -387,8 +387,10 @@ class Run_Condition():
             
             # Question answered correctly
 
+            qn_errors = ["payload", "obstruction", "camera", "laserscan", "localisation"]
+
             correct_qn = "n/a"
-            if error in ["Dropped Payload", "Obstruction in Robot's Path"]:
+            if any([q in error.lower() for q in qn_errors]):
                 rp.sleep(0.5)
                 correct_qn = input("\nDid the participant answer the follow-up question correctly? (Y/N):  ")
                 cont = 0

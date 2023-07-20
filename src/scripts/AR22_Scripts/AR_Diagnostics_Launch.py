@@ -226,7 +226,7 @@ class AR_error_diagnostics:
             
             #Prepend static training scenarios to lists
             self.errors = ["T","T","T","T"] + self.errors
-            self.conditions = ["3","4","1","2"] + self.conditions
+            self.conditions = ["4","3","1","2"] + self.conditions
 
 
         #Display all scenarios
