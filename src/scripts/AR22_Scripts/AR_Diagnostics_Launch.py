@@ -274,7 +274,7 @@ class AR_error_diagnostics:
             
             # Prompt experimentor to get user to do post-condition survey
             if l > 4 and (self.conditions[l] == self.conditions[l-1]):
-                wait = input("\n\nUSER NOW DOES POST-CONDITION SURVEY")
+                wait = input("\n\nUSER NOW DOES POST-CONDITION SURVEY    &    RESTART 'process_message' SCRIPTS")
                 print("\n")
 
             # End of training

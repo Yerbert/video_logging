@@ -169,7 +169,7 @@
     },
     {
         "bag_name": "CameraSmudge.bag",
-        "goal" :[0.0, 0.0, 0.0],
+        "goal" :[0.4, -2.0, 0.0],
         "infologs": [
             {
                 "time": 6.51,
