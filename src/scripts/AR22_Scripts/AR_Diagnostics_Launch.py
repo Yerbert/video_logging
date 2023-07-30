@@ -23,6 +23,7 @@ except ImportError:
     from __builtin__ import input
 #from Constants import Constants
 from geometry_msgs.msg import Point, Vector3, WrenchStamped, PoseStamped
+from video_logging.msg import ClearScenario
 from openpyxl import load_workbook, Workbook
 
 import rosbag_player_experimental
@@ -287,13 +288,24 @@ class AR_error_diagnostics:
 
     def configure_device_connections(self, new_condition, rosbag_name):
 
-        sleep_seconds = 4
         print("\n  Signalling devices to configure connections...")
-        
         self.condition_pub.publish(String(new_condition))
-        JackalSSH().ros_pub_condition(new_condition).kill(3)
-        print("  Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
-        rospy.sleep(sleep_seconds) # to allow reconnections to occur
+        JackalSSH().ros_pub_condition(new_condition).kill(5.5)
+
+        # Clear scenario again, just in case any frames lagged behind previously
+        print("  Clearing scenario...")
+        clear_all = ClearScenario(True, True, True, True)
+        j = JackalSSH().ros_pub_msg("/clear_scenario", "video_logging/ClearScenario", clear_all)
+        os.system("rostopic pub -1 /clear_scenario video_logging/ClearScenario \"{'camera':true, 'point_cloud':true, 'infologs':true, 'tf':true}\"")
+        j.kill(0)
+
+        # sleep_seconds = 1
+        # print("  Sleeping for {} more seconds to allow connections...".format(sleep_seconds))
+        # rospy.sleep(sleep_seconds) # to allow reconnections to occur
+        
+
+        
+        
 
 if __name__ == '__main__':
     rospy.init_node('error_diagnostics_user_study')
