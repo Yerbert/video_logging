@@ -207,7 +207,7 @@ class AR_error_diagnostics:
             #Find row relating to current participant
             for i in range(2,pol_rows):
                 number = int(pol_sheet.cell(row = i, column = 1).value)
-                if (number%32) == self.participant_no:
+                if (number) == self.participant_no:
                     participant_row = i
             
             #Find order of conditions for current participant

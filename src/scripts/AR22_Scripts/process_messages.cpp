@@ -92,8 +92,10 @@ class BlockFilter : public Filter
 };
 
 
-int pointcloud_downsample = 1; // pointcloud frame downsample factor. 1 = no downsampling
-int pointcloud_counter = 0;
+int pointcloud_downframe = 1; // pointcloud frame downsample factor. 1 = no downsampling
+int pointcloud_downsample = 1; // keep every nth point
+int pointcloud_framecounter = 0;
+int pointcloud_pointcounter = 0;
 int video_downsample = 2;
 int video_counter = 0;
 ros::Publisher pointcloud_pub;
@@ -129,6 +131,12 @@ bool is_acceptable_point(const pcl::PointXYZ& point)
 
 	// drop point if at/below floor level
 	if (point.z <= floor_z) {
+		return false;
+	}
+
+	// downsampling
+	pointcloud_pointcounter = (pointcloud_pointcounter + 1) % (pointcloud_downsample);
+	if (pointcloud_pointcounter != 0) {
 		return false;
 	}
 
@@ -220,8 +228,8 @@ void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 	}
 
 
-	pointcloud_counter = (pointcloud_counter + 1) % pointcloud_downsample;
-	if (pointcloud_counter != 0) {
+	pointcloud_framecounter = (pointcloud_framecounter + 1) % pointcloud_downframe;
+	if (pointcloud_framecounter != 0) {
 		return;
 	}
 
@@ -230,7 +238,9 @@ void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 
 	pcl::PointCloud<pcl::PointXYZ> new_cloud;
 	new_cloud.header = cloud.header;
-	new_cloud.points.reserve(cloud.points.size());
+	int fake_obj_size = 500;
+	int reserve_amount = cloud.points.size() + fake_obj_size;
+	new_cloud.points.reserve(reserve_amount + 10);
 
 	for (const auto& point : cloud) {
 
@@ -242,7 +252,7 @@ void pointcloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 	}
 
 	if (non_existent_object) {
-		for(int i=0; i<500; i++) {
+		for(int i=0; i<fake_obj_size; i++) {
 			new_cloud.points.push_back(create_fake_point());
 		}
 	}
@@ -299,17 +309,17 @@ void camera_smudge_callback(const std_msgs::BoolConstPtr& msg)
 
 void condition_callback(const std_msgs::StringConstPtr& msg)
 {
-	if (msg->data == "Tablet + replay") {
-		if (pointcloud_downsample == 1) {
-			std::cout << "Tablet replay, switching to downsampled datastream\n";
+	if (msg->data == "Tablet + replay" || (msg->data == "Tablet + live")) {
+		if (pointcloud_downframe == 1) {
+			std::cout << "Tablet, switching to downsampled datastream\n";
 		}
-		pointcloud_downsample = 3;
+		pointcloud_downframe = 3;
 		video_downsample = 3;
 	} else {
-		if (pointcloud_downsample == 3) {
+		if (pointcloud_downframe == 3) {
 			std::cout << "Switching back to non-downsampled datastream\n";
 		}
-		pointcloud_downsample = 1;
+		pointcloud_downframe = 1;
 		video_downsample = 1;
 	}
 }

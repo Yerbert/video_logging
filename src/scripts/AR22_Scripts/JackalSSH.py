@@ -12,7 +12,7 @@ Always call the .kill() method when you no longer need it.
 
 class JackalSSH:
 
-    JACKAL_IP = '192.168.11.12'
+    JACKAL_IP = '192.168.11.10'
 
     def __init__(self):
         self.process = subprocess.Popen(

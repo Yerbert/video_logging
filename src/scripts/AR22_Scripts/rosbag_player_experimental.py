@@ -165,7 +165,7 @@ class Run_Condition():
         j = JackalSSH().ros_pub_msg("/clear_scenario", "video_logging/ClearScenario", clear_all)
         ssh_lst.append(j)
 
-        wait_seconds = 4
+        wait_seconds = 3.5
         print("  Allowing {} seconds...".format(wait_seconds))
         rp.sleep(wait_seconds)
         
