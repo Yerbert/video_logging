@@ -1,17 +1,22 @@
-# video_logging
+# "video_logging"
 
-## Docker
-From a terminal running in the video_logging folder, to open the docker container run:
-`./docker/run.sh`
+## Unity
 
-## To run camera node
-`roslaunch realsense2_camera rs_camera.launch`
+Download Unity 2020.3.26f1.
 
-## To run tcp connector (to communicate with unity)
+For AR, must build to UWP, and deploy the solution to the HoloLens using Visual Studio.
+
+For Tablet, build and run to Android.
+
+## ROS
+
+Clone repo to ~/catkin_ws/src/ and run `catkin_make`
+
+## To run tcp connector
 `roslaunch ros_tcp_endpoint endpoint.launch`
 
-## To run video_logging (bagging of files and replay when error detected)
-`rosrun video_logging video_logging.py`
+## To run message processor
+`rosrun video_logging process_messages`
 
-## If you dont have a roslaunch file running and want to run a python file, make sure to start a roscore or launch a file
-`roscore`
+## To run main experimenter script
+`rosrun video_logging AR_Diagnostics_Launch.py`

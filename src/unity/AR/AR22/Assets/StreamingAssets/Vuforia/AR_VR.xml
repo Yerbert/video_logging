@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QCARConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="qcar_config.xsd">
+  <Tracking>
+    <ImageTarget name="qr-coder5_scaled_scaled" size="0.180000 0.180000" />
+    <ImageTarget name="Monitor_17770997" size="0.135000 0.135000" />
+    <ImageTarget name="17770997" size="0.090000 0.090000" />
+    <ImageTarget name="marker23" size="0.164000 0.164000" />
+    <ImageTarget name="jackal" size="0.258000 0.197800" />
+  </Tracking>
+</QCARConfig>
